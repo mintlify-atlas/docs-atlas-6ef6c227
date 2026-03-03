@@ -1,0 +1,137 @@
+{
+  "projectType": "framework",
+  "projectName": "Hubbly",
+  "projectDescription": "All-in-one hub management solution for Minecraft servers with customizable items, actions, and player management.",
+  "theme": "aspen",
+  "primaryColor": "#FFD700",
+  "lightColor": "#FFA500",
+  "darkColor": "#FF8C00",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Getting Started",
+            "pages": [
+              "introduction",
+              "installation",
+              "quickstart"
+            ]
+          },
+          {
+            "group": "Core Concepts",
+            "pages": [
+              "concepts/architecture",
+              "concepts/actions",
+              "concepts/items",
+              "concepts/menus"
+            ]
+          },
+          {
+            "group": "Configuration",
+            "pages": [
+              "configuration/config",
+              "configuration/items",
+              "configuration/menus",
+              "configuration/permissions",
+              "configuration/disabled-worlds"
+            ]
+          },
+          {
+            "group": "Features",
+            "pages": [
+              "features/spawn-management",
+              "features/movement-items",
+              "features/player-visibility",
+              "features/launchpads",
+              "features/double-jump",
+              "features/chat-management",
+              "features/database"
+            ]
+          },
+          {
+            "group": "Guides",
+            "pages": [
+              "guides/creating-custom-items",
+              "guides/creating-menus",
+              "guides/action-system",
+              "guides/placeholderapi",
+              "guides/bungee-integration"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "Commands",
+            "pages": [
+              "api/commands/hubbly",
+              "api/commands/spawn",
+              "api/commands/fly",
+              "api/commands/chat"
+            ]
+          },
+          {
+            "group": "Actions",
+            "pages": [
+              "api/actions/overview",
+              "api/actions/player",
+              "api/actions/menu",
+              "api/actions/effects"
+            ]
+          },
+          {
+            "group": "Permissions",
+            "pages": [
+              "api/permissions"
+            ]
+          },
+          {
+            "group": "Events",
+            "pages": [
+              "api/events"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Custom item system with configurable actions",
+    "Interactive menu builder with YAML configuration",
+    "Action system with 17+ action types (commands, sounds, titles, effects)",
+    "Movement items (Trident, AOTE, Grappling Hook, Enderbow)",
+    "Spawn management with customizable teleportation",
+    "Player visibility toggler",
+    "Launchpads and double-jump mechanics",
+    "Chat management (lock, clear, anti-swear)",
+    "World-based feature toggling",
+    "PlaceholderAPI integration",
+    "BungeeCord support",
+    "Database integration with HikariCP",
+    "Anti-WorldDownload protection"
+  ],
+  "publicApiSurface": [
+    "/hubbly - Main plugin command",
+    "/spawn - Teleport to spawn",
+    "/setspawn - Set spawn location",
+    "/fly - Toggle flight mode",
+    "/clearchat - Clear chat for all players",
+    "/lockchat - Lock/unlock chat",
+    "ActionManager - Execute and register custom actions",
+    "ItemsManager - Manage custom items",
+    "PlayerManager - Player data management",
+    "BossBarManager - BossBar display management",
+    "FileManager - Configuration file handling",
+    "LocaleManager - Multi-language support",
+    "StorageManager - Database operations",
+    "ActionEvent - Custom action execution event",
+    "hubbly.* - All permissions wildcard",
+    "hubbly.command.* - Command permissions",
+    "hubbly.use.* - Item usage permissions",
+    "hubbly.bypass.* - Bypass protection permissions"
+  ]
+}
