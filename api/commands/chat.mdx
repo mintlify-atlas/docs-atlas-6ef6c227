@@ -1,0 +1,175 @@
+---
+title: "/clearchat and /lockchat"
+description: "Chat moderation commands for clearing and locking server chat"
+---
+
+## Overview
+
+Hubbly provides two commands for chat moderation: clearing chat history and locking/unlocking chat for non-privileged players.
+
+---
+
+## /clearchat
+
+Clears the chat for all online players by sending blank messages.
+
+### Syntax
+
+```
+/clearchat
+```
+
+### Aliases
+
+- `/cc`
+- `/clearc`
+- `/cchat`
+
+### Permission
+
+<ParamField path="hubbly.command.clearchat" type="permission">
+  Required to use the `/clearchat` command.
+  
+  **Default:** op
+  
+  **Description:** Clears the chat
+</ParamField>
+
+### Behavior
+
+1. Verifies the sender has the required permission
+2. Sends 100 blank messages to every online player
+3. Effectively clears chat history from their screen
+4. Logs the action with the sender's name to the debug log
+
+### Examples
+
+```
+/clearchat
+/cc
+```
+
+<Note>
+This command sends blank messages to all players, regardless of their world or location. Players with chat logging plugins may still see the message history.
+</Note>
+
+### Technical Details
+
+The command sends exactly **100 blank messages** to ensure chat is fully cleared on most client configurations:
+
+```java
+for(int i = 0; i <= CHAT_CLEAR_MESSAGE_COUNT; i++) {
+    for(Player onlinePlayer : Bukkit.getOnlinePlayers()) {
+        onlinePlayer.sendMessage("");
+    }
+}
+```
+
+---
+
+## /lockchat
+
+Toggles chat lock status, preventing non-privileged players from sending messages.
+
+### Syntax
+
+```
+/lockchat
+```
+
+### Aliases
+
+- `/lc`
+
+### Permission
+
+<ParamField path="hubbly.command.lockchat" type="permission">
+  Required to use the `/lockchat` command and bypass the chat lock.
+  
+  **Default:** Not set (must be granted manually)
+</ParamField>
+
+### Behavior
+
+1. Checks if the sender has the required permission
+2. Toggles the global chat lock state
+3. Broadcasts a message to all players (except those in disabled worlds)
+4. Prevents non-privileged players from sending chat messages when locked
+
+### Examples
+
+**Locking chat:**
+```
+/lockchat
+```
+Broadcast: `Chat has been locked by <player_name>`
+
+**Unlocking chat:**
+```
+/lockchat
+```
+Broadcast: `Chat has been unlocked by <player_name>`
+
+### Chat Lock Behavior
+
+<ParamField path="Locked State" type="state">
+  When chat is locked:
+  - Players without the bypass permission cannot send messages
+  - Players with `hubbly.bypass.chat` or operator status can still send messages
+  - Commands are not affected by chat lock
+</ParamField>
+
+<ParamField path="Unlocked State" type="state">
+  When chat is unlocked:
+  - All players can send messages normally
+</ParamField>
+
+### Disabled Worlds
+
+The lock/unlock broadcast respects the disabled worlds configuration:
+
+```java
+if(disabledWorlds.inDisabledWorld(p.getWorld())) {
+    continue; // Skip players in disabled worlds
+}
+```
+
+<Note>
+Players in disabled worlds will not see the lock/unlock broadcast message.
+</Note>
+
+### Messages
+
+Messages are configurable in `languages/en.yml`:
+
+```yaml
+chat_locked: Chat has been locked by %player_name%
+chat_unlocked: Chat has been unlocked by %player_name%
+```
+
+**Available Placeholders:**
+- `%player_name%` - The name of the player who locked/unlocked chat
+
+<Warning>
+Unlike other messages, chat lock messages only support the `%player_name%` placeholder. PlaceholderAPI is not supported for these specific messages.
+</Warning>
+
+---
+
+## Permissions Summary
+
+| Permission | Description | Default |
+|------------|-------------|----------|
+| `hubbly.command.clearchat` | Use `/clearchat` command | op |
+| `hubbly.command.lockchat` | Use `/lockchat` command | (not set) |
+| `hubbly.bypass.chat` | Bypass chat lock restrictions | (not set) |
+| `hubbly.command.*` | All command permissions | op |
+
+---
+
+## Source Reference
+
+Implemented in:
+- `ClearChatCommand.java:42` - Chat clearing handler
+- `LockChatCommand.java:40` - Chat lock toggle handler
+- `LockChat.java` - Chat lock state manager

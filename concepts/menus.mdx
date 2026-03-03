@@ -1,0 +1,630 @@
+---
+title: Menu System
+description: Create interactive GUI menus with custom items, actions, and dynamic content
+---
+
+## Overview
+
+Hubbly's menu system allows you to create fully customizable chest-based GUIs with interactive items. Menus are defined in YAML files and can be opened via commands, actions, or programmatically.
+
+## Menu Architecture
+
+The menu system consists of three main components:
+
+<CardGroup cols={3}>
+  <Card title="InventoryBuilder" icon="toolbox">
+    Constructs inventories from configuration
+  </Card>
+  <Card title="CustomGUI" icon="window-maximize">
+    Legacy wrapper for menu creation
+  </Card>
+  <Card title="InventoryListener" icon="hand-pointer">
+    Handles click events and executes actions
+  </Card>
+</CardGroup>
+
+## Creating a Menu
+
+Menus are created in the `menus/` folder as YAML files:
+
+```yaml
+# menus/example.yml
+size: 27
+title: "&6&lExample Menu"
+
+items:
+  item1:
+    slot: 13
+    material: DIAMOND
+    name: "&b&lClick Me!"
+    lore:
+      - "&7This is an example item"
+      - "&7Click to execute actions"
+    actions:
+      - "[MESSAGE] &aYou clicked the diamond!"
+      - "[SOUND] ENTITY_EXPERIENCE_ORB_PICKUP"
+  
+  fill:
+    slot: -1  # -1 = fill empty slots
+    material: BLACK_STAINED_GLASS_PANE
+    name: " "
+```
+
+### Opening the Menu
+
+Use the `[MENU]` action:
+
+```yaml
+[MENU] example
+# or
+[MENU] menus/example.yml
+```
+
+## InventoryBuilder
+
+The core class for building menus from configuration:
+
+```java
+// From InventoryBuilder.java:26-40
+public class InventoryBuilder implements InventoryHolder {
+    private String title;
+    private int size;
+    private Map<Integer, ItemStack> icons;
+    private Player player;
+    
+    public InventoryBuilder(int size, String title) {
+        this.icons = new HashMap<>();
+        this.size = size;
+        this.title = title;
+    }
+}
+```
+
+### Loading from Configuration
+
+```java
+// From InventoryBuilder.java:252-291
+public InventoryBuilder fromFile(FileConfiguration config) {
+    // Check for legacy format
+    if(config.contains("legacy")) {
+        return this.handleLegacy(config);
+    }
+    
+    this.size = config.getInt("size", 27);
+    this.title = config.getString("title", "&bMenu");
+    
+    ConfigurationSection items = config.getConfigurationSection("items");
+    if (items == null) {
+        Hubbly.getInstance().getLogger().warning("Missing 'items' section in config.");
+        return this;
+    }
+    
+    ItemStack fillItem = null;
+    
+    for (String key : items.getKeys(false)) {
+        ConfigurationSection itemSection = items.getConfigurationSection(key);
+        if (itemSection == null) continue;
+        
+        int slot = itemSection.getInt("slot", -1);
+        ItemStack item = new ItemBuilder()
+            .setPlayer(player)
+            .fromConfig(player, itemSection)
+            .build();
+        
+        if (slot == -1) {
+            fillItem = item;  // Fill item for empty slots
+        } else {
+            setItem(slot, item);
+        }
+    }
+    
+    // Fill empty slots
+    if (fillItem != null) {
+        for (int i = 0; i < size; i++) {
+            if (!icons.containsKey(i)) {
+                setItem(i, fillItem);
+            }
+        }
+    }
+    
+    return this;
+}
+```
+
+### Getting the Bukkit Inventory
+
+```java
+// From InventoryBuilder.java:67-79
+@Override
+public @NotNull Inventory getInventory() {
+    if(size > 54) size = 54;
+    if(size < 9) size = 9;
+    
+    String title = ChatUtils.translateHexColorCodes(this.title);
+    Inventory inventory = Bukkit.createInventory(this, size, title);
+    
+    for(Map.Entry<Integer, ItemStack> entry : icons.entrySet()) {
+        inventory.setItem(entry.getKey(), entry.getValue());
+    }
+    
+    return inventory;
+}
+```
+
+## Menu Configuration Structure
+
+### Basic Structure
+
+```yaml
+size: 27  # Must be multiple of 9 (9, 18, 27, 36, 45, 54)
+title: "&6Menu Title"  # Supports color codes and hex colors
+
+items:
+  unique_item_key:
+    slot: 0  # 0-53 for inventory slot, -1 for fill item
+    material: MATERIAL_NAME
+    name: "&aItem Name"
+    lore:
+      - "&7Line 1"
+      - "&7Line 2"
+    actions:
+      - "[ACTION1] data"
+      - "[ACTION2] data"
+```
+
+### Menu Properties
+
+<Accordion title="Size Property">
+**Valid Values:** 9, 18, 27, 36, 45, 54
+
+```yaml
+size: 27  # 3 rows
+size: 54  # 6 rows (double chest)
+```
+
+The inventory size is automatically clamped:
+```java
+if(size > 54) size = 54;
+if(size < 9) size = 9;
+```
+</Accordion>
+
+<Accordion title="Title Property">
+Supports:
+- Legacy color codes (`&a`, `&b`, etc.)
+- Hex colors (`&#FF5733`)
+- PlaceholderAPI placeholders
+
+```yaml
+title: "&6&lHub Menu"  # Gold, bold
+title: "&#FF5733Custom Color"  # Hex color
+title: "%player_name%'s Menu"  # PlaceholderAPI
+```
+</Accordion>
+
+<Accordion title="Permission Property">
+Optional permission requirement:
+
+```yaml
+permission: "hub.menu.vip"
+```
+
+Checked in MenuAction:
+```java
+// From MenuAction.java:29-38
+String perm = config.getString("permission");
+if(perm != null && !player.hasPermission(perm)) {
+    new MessageBuilder()
+        .setPlugin(plugin)
+        .setPlayer(player)
+        .setKey("no_permission_use")
+        .send();
+    return;
+}
+```
+</Accordion>
+
+## Item Configuration
+
+Each item in the menu is defined under the `items:` section:
+
+### Standard Item
+
+```yaml
+items:
+  my_item:
+    slot: 13  # Center slot of 27-slot inventory
+    material: DIAMOND
+    name: "&b&lDiamond"
+    lore:
+      - "&7This is a diamond"
+      - "&7Click for rewards!"
+    actions:
+      - "[CONSOLE] give %player_name% diamond 10"
+      - "[MESSAGE] &aYou received 10 diamonds!"
+```
+
+### Fill Item
+
+```yaml
+items:
+  fill:
+    slot: -1  # Special value for fill item
+    material: GRAY_STAINED_GLASS_PANE
+    name: " "  # Empty name
+```
+
+<Info>
+  Fill items automatically populate all empty slots in the inventory. Only one fill item should be defined per menu.
+</Info>
+
+### Close Button
+
+```yaml
+items:
+  close_button:
+    slot: 26  # Bottom-right corner
+    material: BARRIER
+    name: "&c&lClose"
+    actions:
+      - "[CLOSE]"
+```
+
+### Navigation Buttons
+
+```yaml
+items:
+  back_button:
+    slot: 18  # Bottom-left
+    material: ARROW
+    name: "&e← Back"
+    actions:
+      - "[MENU] main_menu"
+      - "[SOUND] UI_BUTTON_CLICK"
+  
+  next_page:
+    slot: 26  # Bottom-right
+    material: ARROW
+    name: "&eNext Page →"
+    actions:
+      - "[MENU] page2"
+      - "[SOUND] UI_BUTTON_CLICK"
+```
+
+## Click Event Handling
+
+The InventoryListener handles all menu interactions:
+
+```java
+// From InventoryListener.java:31-57
+@EventHandler
+private void onInventoryClick(InventoryClickEvent event) {
+    // Check if the inventory is a Hubbly menu
+    if(!(event.getView().getTopInventory().getHolder() instanceof InventoryBuilder)) {
+        return;
+    }
+    
+    event.setCancelled(true);  // Prevent item pickup
+    
+    if(!(event.getWhoClicked() instanceof Player player)) return;
+    
+    ItemStack clickedItem = event.getCurrentItem();
+    if(clickedItem == null || clickedItem.getType() == Material.AIR) return;
+    
+    ItemMeta meta = clickedItem.getItemMeta();
+    if(meta == null) return;
+    
+    // Get actions from NBT data
+    PersistentDataContainer dataContainer = meta.getPersistentDataContainer();
+    String actionsString = dataContainer.get(actionsKey, PersistentDataType.STRING);
+    
+    if (actionsString == null) {
+        return;
+    }
+    
+    plugin.getDebugMode().info("Actions string found: " + actionsString);
+    ActionManager actionManager = plugin.getActionManager();
+    actionManager.executeActions(player, actionsString);
+}
+```
+
+### Click Prevention
+
+<Note>
+  All clicks in Hubbly menus are automatically cancelled to prevent item pickup/movement.
+</Note>
+
+## Complete Menu Examples
+
+### Server Selector
+
+```yaml
+# menus/selector.yml
+size: 27
+title: "&6&lServer Selector"
+
+items:
+  lobby:
+    slot: 11
+    material: EMERALD
+    name: "&a&lLobby"
+    lore:
+      - "&7Return to the main lobby"
+      - ""
+      - "&eClick to connect!"
+    actions:
+      - "[BUNGEE] lobby"
+      - "[SOUND] ENTITY_ENDERMAN_TELEPORT"
+  
+  survival:
+    slot: 13
+    material: GRASS_BLOCK
+    name: "&2&lSurvival"
+    lore:
+      - "&7Join our survival server"
+      - ""
+      - "&7Players: &e%server_online_lobby%"
+      - "&eClick to connect!"
+    actions:
+      - "[MESSAGE] &aConnecting to survival..."
+      - "[BUNGEE] survival"
+  
+  minigames:
+    slot: 15
+    material: BOW
+    name: "&6&lMinigames"
+    lore:
+      - "&7Play exciting minigames"
+      - ""
+      - "&eClick to connect!"
+    actions:
+      - "[BUNGEE] minigames"
+  
+  close:
+    slot: 26
+    material: BARRIER
+    name: "&c&lClose"
+    actions:
+      - "[CLOSE]"
+  
+  fill:
+    slot: -1
+    material: BLACK_STAINED_GLASS_PANE
+    name: " "
+```
+
+### Social Links Menu
+
+```yaml
+# menus/socials.yml
+size: 27
+title: "&d&lSocial Links"
+
+items:
+  discord:
+    slot: 11
+    material: PLAYER_HEAD
+    value: "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvNzg3M2MxMmJmZmI1MjUxYTBiODhkNWFlNzVjNzI0N2NiMzlhNzVmZjFhODFjYmU0YzhhMzliMzExZGRlZGEifX19"
+    name: "&9&lDiscord"
+    lore:
+      - "&7Join our Discord server!"
+      - ""
+      - "&eClick to get the link!"
+    actions:
+      - "[LINK] &9&lJoin our Discord!;&7Click to open Discord;https://discord.gg/yourserver"
+  
+  website:
+    slot: 13
+    material: PLAYER_HEAD
+    value: "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvOWQyYmY5ODY0NzIwZDg3ZmQwNmI4NGVmYTgwYjc5NWM0OGVkNTM5YjE2NTIzYzNiMWYxOTlmNTlmZjRlZDc2In19fQ=="
+    name: "&e&lWebsite"
+    lore:
+      - "&7Visit our website"
+      - ""
+      - "&eClick to open!"
+    actions:
+      - "[LINK] &e&lVisit our website!;&7Click to open;https://yourserver.com"
+  
+  twitter:
+    slot: 15
+    material: PLAYER_HEAD
+    value: "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvNDg3ZDQzOGY1NTczNWU0ZTUxNGRlNmExNjNkZTIxNzBiNzUxYjY1YjUyNDRmOWUzNDU0NDVhYTRiMWEzYzUifX19"
+    name: "&b&lTwitter"
+    lore:
+      - "&7Follow us on Twitter"
+      - ""
+      - "&eClick to open!"
+    actions:
+      - "[LINK] &b&lFollow us on Twitter!;&7Click to open;https://twitter.com/yourserver"
+  
+  fill:
+    slot: -1
+    material: PURPLE_STAINED_GLASS_PANE
+    name: " "
+```
+
+### Shop Menu
+
+```yaml
+# menus/shop.yml
+size: 54
+title: "&6&lHub Shop"
+permission: "hub.shop"
+
+items:
+  ranks:
+    slot: 20
+    material: DIAMOND
+    name: "&b&lRanks"
+    lore:
+      - "&7Purchase a rank"
+      - "&7to unlock exclusive perks!"
+      - ""
+      - "&eClick to browse ranks"
+    actions:
+      - "[MENU] shop_ranks"
+      - "[SOUND] UI_BUTTON_CLICK"
+  
+  cosmetics:
+    slot: 22
+    material: ARMOR_STAND
+    name: "&d&lCosmetics"
+    lore:
+      - "&7Customize your appearance"
+      - ""
+      - "&eClick to browse cosmetics"
+    actions:
+      - "[MENU] shop_cosmetics"
+      - "[SOUND] UI_BUTTON_CLICK"
+  
+  items:
+    slot: 24
+    material: CHEST
+    name: "&e&lItems"
+    lore:
+      - "&7Purchase special items"
+      - ""
+      - "&eClick to browse items"
+    actions:
+      - "[MENU] shop_items"
+      - "[SOUND] UI_BUTTON_CLICK"
+  
+  balance:
+    slot: 49
+    material: GOLD_INGOT
+    name: "&6&lYour Balance"
+    lore:
+      - "&7Coins: &e%vault_eco_balance%"
+  
+  close:
+    slot: 53
+    material: BARRIER
+    name: "&c&lClose"
+    actions:
+      - "[CLOSE]"
+  
+  fill:
+    slot: -1
+    material: GRAY_STAINED_GLASS_PANE
+    name: " "
+```
+
+## Legacy Menu Support
+
+Hubbly supports legacy menu formats and automatically converts them:
+
+```java
+// From InventoryBuilder.java:228-250
+public InventoryBuilder handleLegacy(FileConfiguration config) {
+    ConfigurationSection section = config.getConfigurationSection("legacy");
+    String version = section.getString("value");
+    String type = section.getString("type");
+    
+    if(type == null) {
+        Hubbly.getInstance().getLogger().severe("Type is null in config: " + config.getName());
+    }
+    
+    InventoryBuilder builder = new InventoryBuilder();
+    if(type.equals("socials")) {
+        builder = this.fromLegacySocials(config);
+    } else if(type.equals("selector")) {
+        builder = this.fromLegacySelector(config);
+    } else {
+        Hubbly.getInstance().getLogger().severe("Couldn't parse legacy type: " + type);
+    }
+    
+    new DebugMode().warn("Legacy " + type + " detected, please update");
+    return builder;
+}
+```
+
+## Opening Menus Programmatically
+
+```java
+import me.calrl.hubbly.inventory.InventoryBuilder;
+import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.entity.Player;
+import org.bukkit.inventory.Inventory;
+
+public void openMenu(Player player, String menuName) {
+    FileManager manager = plugin.getFileManager();
+    FileConfiguration config = manager.getConfig("menus/" + menuName);
+    
+    Inventory inventory = new InventoryBuilder()
+        .setPlayer(player)
+        .fromFile(config)
+        .getInventory();
+    
+    player.openInventory(inventory);
+}
+```
+
+## Dynamic Content
+
+Use PlaceholderAPI for dynamic menu content:
+
+```yaml
+items:
+  player_info:
+    slot: 4
+    material: PLAYER_HEAD
+    name: "&e%player_name%"
+    lore:
+      - "&7Level: &e%player_level%"
+      - "&7Balance: &a$%vault_eco_balance%"
+      - "&7Rank: &b%vault_rank%"
+```
+
+## Best Practices
+
+1. **Use descriptive item keys** for easy maintenance
+2. **Always include a close button** for user experience
+3. **Add sound effects** to clicks for feedback
+4. **Use fill items** to prevent accidental clicks
+5. **Test permissions** to ensure access control
+6. **Include helpful lore** explaining what items do
+7. **Use consistent naming** across related menus
+8. **Limit menu size** to avoid overwhelming users
+
+## Troubleshooting
+
+<Accordion title="Menu not opening">
+- Check that the menu file exists in `plugins/Hubbly/menus/`
+- Verify YAML syntax is correct (use a YAML validator)
+- Check console for error messages
+- Ensure player has required permission
+</Accordion>
+
+<Accordion title="Actions not executing">
+- Verify actions are stored in NBT (check with F3+H)
+- Ensure action syntax is correct: `[ACTION] data`
+- Check that ActionManager has registered the action type
+- Look for "Actions string found" in debug logs
+</Accordion>
+
+<Accordion title="Items not displaying correctly">
+- Verify material names are valid for your server version
+- Check that custom model data is supported
+- Ensure player head textures are base64 encoded
+- Verify slot numbers are within inventory bounds
+</Accordion>
+
+## Performance Considerations
+
+<Info>
+  Menus are built on-demand when opened. For frequently accessed menus, consider caching the InventoryBuilder instance.
+</Info>
+
+```java
+private final Map<String, InventoryBuilder> menuCache = new HashMap<>();
+
+public Inventory getMenu(Player player, String menuName) {
+    InventoryBuilder builder = menuCache.computeIfAbsent(menuName, name -> {
+        FileConfiguration config = fileManager.getConfig("menus/" + name);
+        return new InventoryBuilder()
+            .fromFile(config);
+    });
+    
+    return builder.setPlayer(player).getInventory();
+}
+```

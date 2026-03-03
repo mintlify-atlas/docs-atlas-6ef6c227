@@ -1,0 +1,252 @@
+---
+title: Launchpads
+description: Block-based launch pads that propel players into the air
+---
+
+Launchpads allow you to create jump pads using specific block types that launch players into the air when stepped on. This feature is perfect for creating parkour courses, quick travel routes, or fun interactive elements in your hub.
+
+## Overview
+
+When a player walks on or stands on a configured block type (default: Slime Block), they are launched into the air with configurable power and sound effects. The feature includes a cooldown system to prevent spam.
+
+## Configuration
+
+```yaml config.yml
+launchpad:
+  enabled: true
+  type: "SLIME_BLOCK"
+  power: 2
+  power_y: 0.5
+  # INTEGERS ONLY
+  cooldown: 2
+  sound: entity.firework_rocket.blast
+```
+
+### Configuration Options
+
+<AccordionGroup>
+  <Accordion title="enabled" icon="toggle-on">
+    Enable or disable launchpad functionality.
+    
+    **Type:** Boolean  
+    **Default:** `true`
+  </Accordion>
+
+  <Accordion title="type" icon="cube">
+    The block type that acts as a launchpad.
+    
+    **Type:** Material (Bukkit Material enum)  
+    **Default:** `SLIME_BLOCK`  
+    **Examples:** `SLIME_BLOCK`, `GOLD_BLOCK`, `DIAMOND_BLOCK`
+  </Accordion>
+
+  <Accordion title="power" icon="gauge-high">
+    The horizontal launch power multiplier.
+    
+    **Type:** Number  
+    **Default:** `2`  
+    **Note:** Higher values = stronger horizontal boost
+  </Accordion>
+
+  <Accordion title="power_y" icon="arrow-up">
+    The vertical (upward) launch power.
+    
+    **Type:** Number  
+    **Default:** `0.5`  
+    **Note:** Controls how high players are launched
+  </Accordion>
+
+  <Accordion title="cooldown" icon="clock">
+    Cooldown in seconds between launchpad uses.
+    
+    **Type:** Integer  
+    **Default:** `2`  
+    **Important:** Must be an integer value
+  </Accordion>
+
+  <Accordion title="sound" icon="volume">
+    Sound effect played when launching.
+    
+    **Type:** Sound (Bukkit Sound enum)  
+    **Default:** `entity.firework_rocket.blast`
+  </Accordion>
+</AccordionGroup>
+
+## How It Works
+
+<Steps>
+  <Step title="Player steps on block">
+    When a player moves onto or stands on the configured block type (e.g., SLIME_BLOCK).
+  </Step>
+  
+  <Step title="Check cooldown">
+    The system checks if the player's cooldown has expired.
+  </Step>
+  
+  <Step title="Verify permission">
+    Confirms the player has the `hubbly.use.launchpad` permission.
+  </Step>
+  
+  <Step title="Execute launch">
+    The player is launched with the configured power values and a sound effect plays.
+  </Step>
+</Steps>
+
+## Permissions
+
+**Permission:** `hubbly.use.launchpad`
+
+Players need this permission to be launched by launchpads. Without it, they'll receive a "no permission" message.
+
+## Implementation Details
+
+The launchpad system is implemented in `LaunchpadListener.java` and detects blocks both below and at the player's location:
+
+```java LaunchpadListener.java
+@EventHandler
+public void onPlayerMove(PlayerMoveEvent event) {
+    Player player = event.getPlayer();
+    Location location = player.getLocation();
+
+    Block blockStandingOn = location.getBlock();
+    Block blockBelow = location.subtract(0, 1, 0).getBlock();
+
+    Material launchpadMaterial = Material.valueOf(
+        config.getString("launchpad.type", "SLIME_BLOCK")
+    );
+    
+    if (blockStandingOn.getType() != launchpadMaterial && 
+        blockBelow.getType() != launchpadMaterial) {
+        return;
+    }
+
+    // Check cooldown
+    long cooldown = config.getLong("launchpad.cooldown");
+    if(!cooldownManager.tryCooldown(
+        player.getUniqueId(), 
+        CooldownType.LAUNCHPAD, 
+        cooldown
+    )) return;
+
+    // Execute launch action
+    actionManager.executeAction(player, "[LAUNCH]");
+}
+```
+
+## Launch Action
+
+The actual launch is executed through Hubbly's action system using the `[LAUNCH]` action, which applies velocity to the player based on the configured power values.
+
+## Advanced Usage
+
+### Creating Parkour Courses
+
+Use launchpads strategically in parkour courses:
+
+```yaml
+launchpad:
+  enabled: true
+  type: "SLIME_BLOCK"
+  power: 1.5  # Moderate power for controlled jumps
+  power_y: 1.0  # Higher vertical boost
+  cooldown: 1  # Quick cooldown for fast-paced parkour
+  sound: entity.firework_rocket.blast
+```
+
+### Long-Distance Travel
+
+For hub transportation systems:
+
+```yaml
+launchpad:
+  enabled: true
+  type: "GOLD_BLOCK"
+  power: 3.0  # Strong horizontal boost
+  power_y: 0.3  # Lower vertical to maintain direction
+  cooldown: 3
+  sound: entity.firework_rocket.launch
+```
+
+### Gentle Bounce Pads
+
+For decorative or fun elements:
+
+```yaml
+launchpad:
+  enabled: true
+  type: "SLIME_BLOCK"
+  power: 1.0
+  power_y: 0.8  # Mostly vertical bounce
+  cooldown: 1
+  sound: block.slime_block.step
+```
+
+## Best Practices
+
+<Steps>
+  <Step title="Test power values">
+    Experiment with different power and power_y combinations to achieve the desired launch effect. Start with default values and adjust incrementally.
+  </Step>
+  
+  <Step title="Use distinct block types">
+    Choose a block type that stands out visually so players immediately recognize it as a launchpad.
+  </Step>
+  
+  <Step title="Set appropriate cooldowns">
+    Balance cooldowns to prevent spam while maintaining smooth gameplay. 1-3 seconds is usually ideal.
+  </Step>
+  
+  <Step title="Place safely">
+    Position launchpads so players land safely. Test the trajectory before finalizing placement.
+  </Step>
+  
+  <Step title="Add visual indicators">
+    Consider placing particles or signs near launchpads to indicate their purpose.
+  </Step>
+</Steps>
+
+## Disabled Worlds
+
+Launchpads respect the disabled worlds configuration and won't function in disabled worlds:
+
+```yaml config.yml
+disabled-worlds:
+  - 'world_nether'
+
+invert: false
+```
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Launchpad not launching players" icon="circle-exclamation">
+    - Check that `launchpad.enabled` is set to `true`
+    - Verify the block type matches the `launchpad.type` in config
+    - Ensure players have the `hubbly.use.launchpad` permission
+    - Confirm the world is not in the disabled-worlds list
+  </Accordion>
+
+  <Accordion title="Launch power too weak/strong" icon="gauge">
+    Adjust the `power` and `power_y` values:
+    - Increase `power` for more horizontal distance
+    - Increase `power_y` for more height
+    - Test incrementally (e.g., 0.5 adjustments)
+  </Accordion>
+
+  <Accordion title="Players getting spammed by launches" icon="rotate">
+    - Increase the `cooldown` value (try 3-5 seconds)
+    - Ensure cooldown is set as an integer, not decimal
+  </Accordion>
+
+  <Accordion title="No sound playing" icon="volume-xmark">
+    - Verify the sound name is a valid Bukkit Sound enum
+    - Check player sound settings are not muted
+    - Test with a common sound like `entity.firework_rocket.blast`
+  </Accordion>
+</AccordionGroup>
+
+## Related Features
+
+- [Double Jump](/features/double-jump) - Another movement enhancement feature
+- [Movement Items](/features/movement-items) - Item-based movement mechanics
+- [Disabled Worlds](/configuration/disabled-worlds) - Control where launchpads work

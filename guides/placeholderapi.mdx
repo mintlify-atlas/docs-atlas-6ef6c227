@@ -1,0 +1,474 @@
+---
+title: PlaceholderAPI Integration
+description: Use PlaceholderAPI placeholders in Hubbly items, menus, and actions
+---
+
+Hubbly has built-in PlaceholderAPI support, allowing you to use placeholders in item names, lore, menu titles, and action messages.
+
+## Prerequisites
+
+<Steps>
+  <Step title="Install PlaceholderAPI">
+    Download and install PlaceholderAPI on your server:
+    
+    ```
+    https://www.spigotmc.org/resources/placeholderapi.6245/
+    ```
+  </Step>
+
+  <Step title="Install Expansions">
+    Download required placeholder expansions:
+    
+    ```
+    /papi ecloud download Player
+    /papi ecloud download Server
+    ```
+  </Step>
+
+  <Step title="Reload PlaceholderAPI">
+    ```
+    /papi reload
+    ```
+  </Step>
+</Steps>
+
+<Note>
+Hubbly automatically detects PlaceholderAPI and enables placeholder parsing when the plugin is present.
+</Note>
+
+## Where Placeholders Work
+
+Placeholders are supported in:
+
+- Item names and lore
+- Menu item names and lore
+- Menu titles
+- Message actions
+- Broadcast actions
+- Title actions
+- Link actions (message and hover text)
+
+## Built-in Placeholders
+
+Hubbly provides these built-in placeholders:
+
+| Placeholder | Description | Example Output |
+|-------------|-------------|----------------|
+| `%name%` | Player's name | `Notch` |
+| `%player_name%` | Player's name (alias) | `Notch` |
+
+## Using Placeholders
+
+### In Item Names and Lore
+
+```yaml items.yml
+items:
+  profile:
+    name: "&6%player_name%'s Profile"
+    material: PLAYER_HEAD
+    texture: %player_name%
+    lore:
+      - "&7Name: &f%player_name%"
+      - "&7Health: &c%player_health%"
+      - "&7Level: &a%player_level%"
+      - "&7World: &e%player_world%"
+    actions:
+      - "[MENU] profile"
+```
+
+### In Menu Titles
+
+```yaml menus/stats.yml
+title: "&6%player_name%'s Statistics"
+size: 27
+items:
+  stats:
+    material: PAPER
+    name: "&aYour Stats"
+    slot: 13
+    lore:
+      - "&7Kills: &f%statistic_player_kills%"
+      - "&7Deaths: &f%statistic_deaths%"
+      - "&7Playtime: &f%statistic_time_played%"
+```
+
+### In Menu Items
+
+```yaml menus/info.yml
+title: "&cServer Info"
+size: 9
+items:
+  player_info:
+    material: PLAYER_HEAD
+    texture: %player_name%
+    name: "&b%player_name%"
+    slot: 4
+    lore:
+      - ""
+      - "&7Display Name: %player_displayname%"
+      - "&7UUID: &f%player_uuid%"
+      - "&7Ping: &a%player_ping%ms"
+      - "&7Gamemode: &e%player_gamemode%"
+      - ""
+      - "&7X: &f%player_x%"
+      - "&7Y: &f%player_y%"
+      - "&7Z: &f%player_z%"
+```
+
+### In Actions
+
+#### Message Action
+
+```yaml
+actions:
+  - "[MESSAGE] &aWelcome, &b%player_name%&a!"
+  - "[MESSAGE] &7You have &e%vault_eco_balance% &7coins"
+```
+
+#### Broadcast Action
+
+```yaml
+actions:
+  - "[BROADCAST] &6%player_displayname% &7has joined from &e%player_world%&7!"
+```
+
+#### Title Action
+
+```yaml
+actions:
+  - "[TITLE] &aWelcome, %player_name%!;&7Level %player_level%;10;60;10"
+```
+
+#### Console Command Action
+
+```yaml
+actions:
+  - "[CONSOLE] give %player_name% diamond %vault_eco_balance_fixed%"
+```
+
+#### Link Action
+
+```yaml
+actions:
+  - "[LINK] Click here, %player_name%;Open our website;example.com"
+```
+
+## Common PlaceholderAPI Expansions
+
+### Player Expansion
+
+```yaml
+lore:
+  - "&7Name: %player_name%"
+  - "&7Display Name: %player_displayname%"
+  - "&7Health: %player_health%/%player_max_health%"
+  - "&7Food: %player_food_level%"
+  - "&7Level: %player_level%"
+  - "&7XP: %player_exp%"
+  - "&7Gamemode: %player_gamemode%"
+  - "&7World: %player_world%"
+  - "&7Ping: %player_ping%ms"
+```
+
+### Server Expansion
+
+```yaml
+lore:
+  - "&7Online: %server_online%/%server_max_players%"
+  - "&7TPS: %server_tps%"
+  - "&7Uptime: %server_uptime%"
+  - "&7Version: %server_version%"
+```
+
+### Vault Expansion
+
+```yaml
+lore:
+  - "&7Balance: $%vault_eco_balance%"
+  - "&7Rank: %vault_rank%"
+  - "&7Group: %vault_group%"
+```
+
+### Statistics Expansion
+
+```yaml
+lore:
+  - "&7Deaths: %statistic_deaths%"
+  - "&7Player Kills: %statistic_player_kills%"
+  - "&7Mob Kills: %statistic_mob_kills%"
+  - "&7Time Played: %statistic_time_played%"
+  - "&7Distance Walked: %statistic_walk_one_cm%"
+```
+
+## Complete Examples
+
+### Player Info Menu
+
+```yaml menus/playerinfo.yml
+title: "&6Info - %player_name%"
+size: 27
+items:
+  player_head:
+    material: PLAYER_HEAD
+    texture: %player_name%
+    name: "&b%player_displayname%"
+    slot: 4
+    lore:
+      - ""
+      - "&7Health: &c%player_health%&7/&c%player_max_health%"
+      - "&7Food: &e%player_food_level%&7/&e20"
+      - "&7Level: &a%player_level%"
+      - "&7XP: &a%player_exp%&7/&a%player_exp_to_level%"
+      - ""
+  
+  location:
+    material: COMPASS
+    name: "&aLocation"
+    slot: 12
+    lore:
+      - "&7World: &f%player_world%"
+      - "&7X: &f%player_x%"
+      - "&7Y: &f%player_y%"
+      - "&7Z: &f%player_z%"
+  
+  stats:
+    material: PAPER
+    name: "&eStatistics"
+    slot: 14
+    lore:
+      - "&7Deaths: &f%statistic_deaths%"
+      - "&7Kills: &f%statistic_player_kills%"
+      - "&7Playtime: &f%statistic_time_played%"
+  
+  fill:
+    slot: -1
+    material: GRAY_STAINED_GLASS_PANE
+    name: " "
+```
+
+### Balance Checker Item
+
+```yaml items.yml
+items:
+  balance:
+    name: "&6Balance Checker"
+    material: GOLD_INGOT
+    glow: true
+    lore:
+      - ""
+      - "&7Your balance: &a$%vault_eco_balance%"
+      - "&7Rank: &e%vault_rank%"
+      - ""
+      - "&7Click to view details"
+    actions:
+      - "[MESSAGE] &7Your balance: &a$%vault_eco_balance%"
+      - "[SOUND] ENTITY_EXPERIENCE_ORB_PICKUP"
+```
+
+### Dynamic Server Selector
+
+```yaml menus/servers.yml
+title: "&cServer Selector - %server_online% Online"
+size: 27
+items:
+  survival:
+    material: GRASS_BLOCK
+    name: "&aSurvival"
+    slot: 11
+    lore:
+      - "&7Status: &aOnline"
+      - "&7Players: &f%bungee_survival%"
+      - ""
+      - "&aClick to join!"
+    actions:
+      - "[BUNGEE] survival"
+  
+  current_server:
+    material: PLAYER_HEAD
+    texture: %player_name%
+    name: "&b%player_name%"
+    slot: 13
+    lore:
+      - "&7You are on: &e%server_name%"
+      - "&7Online: &a%server_online%&7/&a%server_max_players%"
+  
+  creative:
+    material: COMMAND_BLOCK
+    name: "&eCreative"
+    slot: 15
+    lore:
+      - "&7Status: &aOnline"
+      - "&7Players: &f%bungee_creative%"
+      - ""
+      - "&aClick to join!"
+    actions:
+      - "[BUNGEE] creative"
+```
+
+### Personalized Welcome Item
+
+```yaml items.yml
+items:
+  welcome:
+    name: "&6Welcome, %player_name%!"
+    material: BOOK
+    lore:
+      - ""
+      - "&7Thank you for joining!"
+      - "&7You are player #%player_first_join_date%"
+      - ""
+      - "&7Current players: &a%server_online%"
+      - "&7Your rank: &e%vault_rank%"
+      - ""
+    actions:
+      - "[TITLE] &6Welcome!;&7%player_displayname%;10;60;10"
+      - "[SOUND] ENTITY_PLAYER_LEVELUP"
+```
+
+## Advanced Usage
+
+### Conditional Placeholders
+
+Some placeholder expansions support conditions:
+
+```yaml
+lore:
+  - "%player_online% players online"  # Shows number
+  - "%vault_eco_balance_formatted%"   # Formatted with commas
+  - "%statistic_time_played%"         # Formatted time
+```
+
+### Math Placeholders
+
+Use the Math expansion for calculations:
+
+```yaml
+lore:
+  - "&7Total Score: %math_{%statistic_player_kills%-%statistic_deaths%}%"
+```
+
+### Relational Placeholders
+
+For player-to-player comparisons (requires RelationalPlaceholders):
+
+```yaml
+lore:
+  - "&7Comparing to other players..."
+  - "%rel_player_name%"
+```
+
+## Color Support
+
+Placeholders work with both traditional and hex colors:
+
+```yaml items.yml
+items:
+  fancy:
+    name: "<#FF0000>%player_name%<#00FF00>'s Item"
+    material: DIAMOND
+    lore:
+      - "<#FFAA00>Level: &f%player_level%"
+      - "&7Formatted with colors!"
+```
+
+## Troubleshooting
+
+<Warning>
+Common issues and solutions
+</Warning>
+
+### Placeholders Not Parsing
+
+1. **Check PlaceholderAPI installation**
+   ```
+   /papi version
+   ```
+
+2. **Verify expansion is downloaded**
+   ```
+   /papi list
+   ```
+
+3. **Test placeholder manually**
+   ```
+   /papi parse me %player_name%
+   ```
+
+### Performance Issues
+
+- Avoid using too many placeholders in a single menu
+- Some placeholders (like database queries) can be slow
+- Use `/papi debug` to identify slow expansions
+
+### Placeholder Not Found
+
+```yaml
+# Wrong - expansion not installed
+lore:
+  - "Balance: %vault_eco_balance%"  # Vault expansion required
+
+# Right - built-in placeholder
+lore:
+  - "Name: %player_name%"  # Works without expansion
+```
+
+## Implementation Details
+
+Hubbly processes placeholders in these utility methods:
+
+### ChatUtils.java
+
+```java
+public static String processMessage(Player player, String message) {
+    if(player != null && Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")) {
+        message = PlaceholderAPI.setPlaceholders(player, message);
+    }
+    message = translateHexColorCodes(message);
+    return message;
+}
+```
+
+This method is called for:
+- Item names and lore
+- Menu titles
+- Action messages
+- All player-facing text
+
+### ParsePlaceholders.java
+
+```java
+public static String parsePlaceholders(Player player, String text) {
+    if(text.contains("%name%") && player != null) {
+        text = text.replace("%name%", player.getName());
+    }
+    if (Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")) {
+        return PlaceholderAPI.setPlaceholders(player, text);
+    }
+    return text;
+}
+```
+
+## Best Practices
+
+1. **Test Placeholders** - Always test with `/papi parse me <placeholder>`
+2. **Install Required Expansions** - Download only what you need
+3. **Performance** - Minimize slow placeholders in frequently-opened menus
+4. **Fallbacks** - Hubbly gracefully handles missing PlaceholderAPI
+5. **Updates** - Keep PlaceholderAPI and expansions updated
+
+## Useful Resources
+
+- [PlaceholderAPI Wiki](https://github.com/PlaceholderAPI/PlaceholderAPI/wiki)
+- [Available Placeholders](https://github.com/PlaceholderAPI/PlaceholderAPI/wiki/Placeholders)
+- [eCloud Expansions](https://api.extendedclip.com/expansions/)
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Action System" icon="bolt" href="/guides/action-system">
+    Use placeholders in actions
+  </Card>
+  <Card title="Creating Menus" icon="table-cells" href="/guides/creating-menus">
+    Build dynamic menus with placeholders
+  </Card>
+</CardGroup>

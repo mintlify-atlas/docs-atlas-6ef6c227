@@ -1,0 +1,199 @@
+---
+title: Installation
+description: Step-by-step guide to installing Hubbly on your Minecraft server
+---
+
+# Installation Guide
+
+Get Hubbly up and running on your Minecraft server in just a few minutes.
+
+## Requirements
+
+Before installing Hubbly, ensure your server meets these requirements:
+
+<Warning>
+**Required:**
+- Minecraft Server: Spigot or Paper 1.20.6 or higher
+- Java Version: Java 21 or higher
+- Server API: 1.20+
+
+**Optional Dependencies:**
+- PlaceholderAPI (for placeholder support in messages)
+- HeadDatabase (for custom player heads in items)
+</Warning>
+
+## Installation Steps
+
+<Steps>
+  <Step title="Download Hubbly">
+    Download the latest version of Hubbly (v3.5.1) from the official source.
+    
+    Look for the file named `Hubbly-3.5.1.jar` (or the latest version number).
+  </Step>
+
+  <Step title="Stop Your Server">
+    Stop your Minecraft server if it's currently running.
+    
+    ```bash
+    # Run this in your server console
+    stop
+    ```
+    
+    Wait for the server to fully shut down before proceeding.
+  </Step>
+
+  <Step title="Install the Plugin">
+    Place the `Hubbly-3.5.1.jar` file into your server's `plugins` folder.
+    
+    ```
+    your-server/
+    └── plugins/
+        └── Hubbly-3.5.1.jar  ← Place the file here
+    ```
+  </Step>
+
+  <Step title="Install Optional Dependencies">
+    If you want to use PlaceholderAPI or HeadDatabase features, install them now:
+    
+    **PlaceholderAPI:**
+    - Download from [Spigot](https://www.spigotmc.org/resources/placeholderapi.6245/)
+    - Place in the `plugins` folder
+    
+    **HeadDatabase:**
+    - Download from [Spigot](https://www.spigotmc.org/resources/head-database.14280/)
+    - Place in the `plugins` folder
+  </Step>
+
+  <Step title="Start Your Server">
+    Start your Minecraft server.
+    
+    ```bash
+    # Linux/Mac
+    ./start.sh
+    
+    # Windows
+    start.bat
+    
+    # Or using screen/tmux
+    java -jar server.jar
+    ```
+    
+    Hubbly will automatically generate its configuration files on first startup.
+  </Step>
+
+  <Step title="Verify Installation">
+    Check that Hubbly loaded successfully by running:
+    
+    ```
+    /plugins
+    ```
+    
+    You should see Hubbly in the list, displayed in green. You can also check the version:
+    
+    ```
+    /hubbly version
+    ```
+  </Step>
+</Steps>
+
+## Generated Files
+
+After the first startup, Hubbly will create the following files in the `plugins/Hubbly/` directory:
+
+```
+plugins/Hubbly/
+├── config.yml              # Main configuration file
+├── items.yml               # Custom items configuration
+├── menus/
+│   ├── selector.yml        # Server selector menu
+│   └── socials.yml         # Socials menu
+└── languages/
+    └── en.yml              # English language file
+```
+
+<Info>
+All configuration files are created with sensible defaults. Your server will work out of the box, but you'll want to customize these files to match your server's needs.
+</Info>
+
+## Database Setup (Optional)
+
+If you want to enable database storage for persistent data:
+
+<Steps>
+  <Step title="Create a Database">
+    Create a MySQL or MariaDB database for Hubbly:
+    
+    ```sql
+    CREATE DATABASE minecraft CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+    CREATE USER 'hubbly'@'localhost' IDENTIFIED BY 'your_secure_password';
+    GRANT ALL PRIVILEGES ON minecraft.* TO 'hubbly'@'localhost';
+    FLUSH PRIVILEGES;
+    ```
+  </Step>
+
+  <Step title="Configure Database Connection">
+    Edit `plugins/Hubbly/config.yml` and update the database section:
+    
+    ```yaml config.yml
+    database:
+      enabled: true
+      host: localhost
+      port: 3306
+      database: minecraft
+      username: hubbly
+      password: your_secure_password
+    ```
+  </Step>
+
+  <Step title="Reload or Restart">
+    Reload Hubbly to apply the database configuration:
+    
+    ```
+    /hubbly reload
+    ```
+    
+    <Note>
+    Hubbly uses HikariCP for efficient database connection pooling.
+    </Note>
+  </Step>
+</Steps>
+
+## Troubleshooting
+
+### Plugin Won't Load
+
+<Warning>
+If Hubbly shows in red in `/plugins` or won't load:
+
+1. **Check Java Version**: Ensure you're running Java 21 or higher
+   ```bash
+   java -version
+   ```
+
+2. **Check Server Version**: Hubbly requires Spigot/Paper 1.20.6+
+
+3. **Check Logs**: Look for errors in `logs/latest.log`
+
+4. **Check Dependencies**: Ensure all required dependencies are loaded first
+</Warning>
+
+### Database Connection Issues
+
+If you're having database connection problems:
+
+- Verify your database credentials are correct
+- Ensure the database server is running and accessible
+- Check that your database user has the correct permissions
+- Verify the host and port are correct (usually `localhost:3306`)
+
+### Permission Issues
+
+If commands aren't working:
+
+- Ensure you have the correct permissions (see [Permissions](/api/permissions))
+- Op players have access to all commands by default
+- Check your permission plugin configuration
+
+## Next Steps
+
+Now that Hubbly is installed, head over to the [Quick Start Guide](/quickstart) to configure your first lobby!

@@ -1,0 +1,258 @@
+---
+title: Double Jump
+description: Allow players to jump again in mid-air for enhanced mobility
+---
+
+The Double Jump feature allows players to perform a second jump while in the air, providing enhanced mobility and making navigation through your hub more dynamic and fun.
+
+## Overview
+
+When enabled, players in Adventure or Survival mode can double-jump by pressing the jump key twice. The second jump launches them forward and upward with configurable power values.
+
+## Configuration
+
+```yaml config.yml
+double_jump:
+  enabled: true
+  power: 1.5
+  power_y: 0.5
+  # INTEGERS ONLY
+  cooldown: 2
+```
+
+### Configuration Options
+
+<AccordionGroup>
+  <Accordion title="enabled" icon="toggle-on">
+    Enable or disable the double jump feature.
+    
+    **Type:** Boolean  
+    **Default:** `true`
+  </Accordion>
+
+  <Accordion title="power" icon="gauge-high">
+    The horizontal power of the double jump.
+    
+    **Type:** Number  
+    **Default:** `1.5`  
+    **Note:** Higher values = stronger forward momentum
+  </Accordion>
+
+  <Accordion title="power_y" icon="arrow-up">
+    The vertical (upward) power of the double jump.
+    
+    **Type:** Number  
+    **Default:** `0.5`  
+    **Note:** Controls how high the second jump launches the player
+  </Accordion>
+
+  <Accordion title="cooldown" icon="clock">
+    Cooldown in seconds between double jumps.
+    
+    **Type:** Integer  
+    **Default:** `2`  
+    **Important:** Must be an integer value (no decimals)
+  </Accordion>
+</AccordionGroup>
+
+## How It Works
+
+<Steps>
+  <Step title="Player jumps normally">
+    The player performs a regular jump and is now in the air.
+  </Step>
+  
+  <Step title="Player attempts to fly">
+    While in the air, the player presses the jump key again (double-tap jump).
+  </Step>
+  
+  <Step title="System checks conditions">
+    The plugin verifies the player is in Adventure/Survival mode, has the movement key in their data, cooldown has expired, and double jump is enabled.
+  </Step>
+  
+  <Step title="Double jump executes">
+    The player is launched forward and upward with the configured power values.
+  </Step>
+</Steps>
+
+## Technical Implementation
+
+The double jump feature leverages Minecraft's flight toggle event to detect the mid-air jump attempt:
+
+```java DoubleJumpListener.java
+@EventHandler
+public void onToggleFlight(PlayerToggleFlightEvent event) {
+    Player player = event.getPlayer();
+
+    // Skip if in disabled world
+    if(plugin.getDisabledWorldsManager().inDisabledWorld(player.getLocation())) {
+        return;
+    }
+
+    // Only work in Adventure/Survival mode
+    if(player.getGameMode() == GameMode.CREATIVE || 
+       player.getGameMode() == GameMode.SPECTATOR) return;
+
+    PersistentDataContainer dataContainer = player.getPersistentDataContainer();
+    if(!dataContainer.has(PluginKeys.MOVEMENT_KEY.getKey())) return;
+
+    if(config.getBoolean("double_jump.enabled")) {
+        new PlayerMovementHandler(player, plugin).handleMovement(event);
+    }
+}
+```
+
+### Flight Permission System
+
+Double jump uses the flight allowance system creatively. When players join or change gamemode, they're granted flight permission:
+
+```java DoubleJumpListener.java
+@EventHandler
+private void onGamemodeChange(PlayerGameModeChangeEvent event) {
+    Player player = event.getPlayer();
+    
+    if(event.getNewGameMode() == GameMode.ADVENTURE || 
+       event.getNewGameMode() == GameMode.SURVIVAL) {
+        
+        if(config.getBoolean("double_jump.enabled")) {
+            new BukkitRunnable() {
+                @Override
+                public void run() {
+                    player.setAllowFlight(true);
+                }
+            }.runTaskLater(plugin, 1L);
+        }
+    }
+}
+```
+
+<Note>
+The flight permission is only used to detect the double-tap jump input. Players won't actually fly - they'll just get the boost from the double jump.
+</Note>
+
+## Player Movement Modes
+
+Double jump integrates with Hubbly's player movement system. Players must have movement data stored in their PersistentDataContainer for double jump to work. This is automatically managed when:
+
+- Players join the server
+- Players change their movement mode through the movement menu
+- Database integration is enabled
+
+## Best Practices
+
+<Steps>
+  <Step title="Balance power values">
+    Test different power and power_y combinations to find the right feel for your hub. Start with defaults and adjust based on player feedback.
+  </Step>
+  
+  <Step title="Set appropriate cooldown">
+    A 2-second cooldown prevents spam while keeping movement fluid. Adjust based on your hub's size and layout.
+  </Step>
+  
+  <Step title="Test with your hub layout">
+    Ensure double jump doesn't allow access to restricted areas or break parkour challenges.
+  </Step>
+  
+  <Step title="Combine with other features">
+    Double jump works great alongside launchpads and movement items for a comprehensive mobility system.
+  </Step>
+</Steps>
+
+## Permissions
+
+Double jump functionality is tied to the player's movement mode and data, not a specific permission. However, players need to be in Adventure or Survival gamemode for it to work.
+
+<Warning>
+Double jump will NOT work for players in Creative or Spectator mode, as these gamemodes already have native flight capabilities.
+</Warning>
+
+## Disabled Worlds
+
+Double jump respects the disabled worlds configuration:
+
+```yaml config.yml
+disabled-worlds:
+  - 'world_nether'
+
+invert: false
+```
+
+If a player is in a disabled world, double jump will not function.
+
+## Advanced Configuration
+
+### High-Power Double Jump
+
+For larger hubs where players need to cover more distance:
+
+```yaml
+double_jump:
+  enabled: true
+  power: 2.5  # Strong horizontal boost
+  power_y: 0.8  # Higher vertical boost
+  cooldown: 3  # Longer cooldown to balance power
+```
+
+### Subtle Double Jump
+
+For a more subtle movement enhancement:
+
+```yaml
+double_jump:
+  enabled: true
+  power: 1.0  # Gentle forward boost
+  power_y: 0.3  # Small vertical boost
+  cooldown: 1  # Short cooldown for frequent use
+```
+
+### Vertical-Focused Double Jump
+
+For parkour or vertical navigation:
+
+```yaml
+double_jump:
+  enabled: true
+  power: 0.5  # Minimal horizontal movement
+  power_y: 1.2  # Strong upward boost
+  cooldown: 2
+```
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Double jump not working" icon="circle-exclamation">
+    Common causes:
+    - Player is in Creative or Spectator mode
+    - Player doesn't have movement data in PersistentDataContainer
+    - `double_jump.enabled` is set to `false`
+    - Player is in a disabled world
+    - Cooldown hasn't expired yet
+  </Accordion>
+
+  <Accordion title="Players actually flying" icon="plane">
+    This shouldn't happen. Check:
+    - Ensure players are not in Creative mode
+    - Verify no other plugins are granting flight
+    - Check that PlayerMovementHandler is properly canceling the flight event
+  </Accordion>
+
+  <Accordion title="Double jump too weak/strong" icon="gauge">
+    Adjust the values:
+    - Increase `power` for more horizontal distance
+    - Increase `power_y` for more height
+    - Test in small increments (0.2-0.5 adjustments)
+  </Accordion>
+
+  <Accordion title="Cooldown message spam" icon="comments">
+    If players are getting spammed with cooldown messages:
+    - Increase the cooldown duration
+    - Check that cooldown messages are properly suppressed
+    - Verify CooldownManager is functioning correctly
+  </Accordion>
+</AccordionGroup>
+
+## Related Features
+
+- [Movement Items](/features/movement-items) - Additional movement mechanics
+- [Launchpads](/features/launchpads) - Block-based launch mechanics
+- [Main Configuration](/configuration/config) - Configure player flight and other settings

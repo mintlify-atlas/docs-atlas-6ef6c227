@@ -1,0 +1,225 @@
+---
+title: "/hubbly"
+description: "Main command for the Hubbly plugin with various subcommands"
+---
+
+## Overview
+
+The `/hubbly` command is the main command for the Hubbly plugin, providing access to administrative functions, configuration management, and custom item distribution.
+
+## Syntax
+
+```
+/hubbly [subcommand] [arguments]
+```
+
+## Aliases
+
+- `/hb`
+
+## Base Command
+
+<ParamField path="/hubbly" type="command">
+  Running `/hubbly` without arguments displays usage information.
+  
+  **Permission:** `hubbly.hubbly` (default: true)
+</ParamField>
+
+## Subcommands
+
+### help
+
+Displays a list of all available commands and their usage.
+
+<ParamField path="/hubbly help" type="subcommand">
+  Shows all main commands and subcommands with their descriptions.
+  
+  **Permission:** `hubbly.command.help`
+</ParamField>
+
+**Example:**
+```
+/hubbly help
+```
+
+---
+
+### version
+
+Displays the current plugin version and API information.
+
+<ParamField path="/hubbly version" type="subcommand">
+  Shows the plugin version, API version, and website URL.
+  
+  **Permission:** `hubbly.command.version`
+</ParamField>
+
+**Example:**
+```
+/hubbly version
+```
+
+---
+
+### reload
+
+Reloads the plugin's configuration files.
+
+<ParamField path="/hubbly reload" type="subcommand">
+  Reloads all configuration files and reinitializes boss bars.
+  
+  **Permission:** `hubbly.command.reload` (default: op)
+</ParamField>
+
+**Example:**
+```
+/hubbly reload
+```
+
+<Note>
+This command will temporarily remove and re-add all boss bars during the reload process.
+</Note>
+
+---
+
+### give
+
+Gives a custom Hubbly item to a player.
+
+<ParamField path="/hubbly give <player> <item> [amount] [slot]" type="subcommand">
+  Distributes custom items defined in the plugin configuration.
+  
+  **Permission:** `hubbly.command.give` (default: op)
+</ParamField>
+
+<ParamField path="player" type="string" required>
+  The target player's username.
+</ParamField>
+
+<ParamField path="item" type="string" required>
+  The internal name of the custom item to give (e.g., compass, launchpad, trident).
+</ParamField>
+
+<ParamField path="amount" type="integer">
+  The number of items to give (default: 1). Must be between 1 and the item's max stack size.
+</ParamField>
+
+<ParamField path="slot" type="integer">
+  The inventory slot to place the item in (1-36). If not specified, the item is added to the first available slot.
+</ParamField>
+
+**Examples:**
+```
+/hubbly give Steve compass
+/hubbly give Alex launchpad 5
+/hubbly give Notch trident 1 9
+```
+
+<Warning>
+The item name must match exactly with items defined in `items.yml`.
+</Warning>
+
+---
+
+### menu
+
+Opens a custom menu for a player.
+
+<ParamField path="/hubbly menu <menu>" type="subcommand">
+  Opens a menu defined in the `menus/` folder.
+  
+  **Permission:** `hubbly.command.menu`
+</ParamField>
+
+<ParamField path="menu" type="string" required>
+  The name of the menu file (without .yml extension) located in the `menus/` folder.
+</ParamField>
+
+**Examples:**
+```
+/hubbly menu socials
+/hubbly menu selector
+```
+
+<Note>
+Players can only execute this command. The menu must exist in the `plugins/Hubbly/menus/` directory.
+</Note>
+
+---
+
+### nextannouncement
+
+Skips to the next scheduled announcement in the queue.
+
+<ParamField path="/hubbly nextannouncement" type="subcommand">
+  Immediately broadcasts the next announcement without waiting for the timer.
+  
+  **Permission:** `hubbly.command.nextannouncement` (default: op)
+</ParamField>
+
+**Example:**
+```
+/hubbly nextannouncement
+```
+
+<Note>
+This command respects disabled worlds and will not send announcements to players in those worlds.
+</Note>
+
+---
+
+### convert
+
+Converts legacy configuration files to the new menu format.
+
+<ParamField path="/hubbly convert <type>" type="subcommand">
+  Converts old menu formats (v2.x) to the new v3.0 format.
+  
+  **Permission:** `hubbly.command.convert`
+</ParamField>
+
+<ParamField path="type" type="string" required>
+  The type of file to convert. Valid options:
+  - `selector` - Converts server selector configuration
+  - `socials` - Converts socials menu configuration
+</ParamField>
+
+**Examples:**
+```
+/hubbly convert selector
+/hubbly convert socials
+```
+
+<Warning>
+This command is deprecated as of v3.0.0 and is only intended for one-time migration from older versions.
+</Warning>
+
+---
+
+## Permissions
+
+| Permission | Description | Default |
+|------------|-------------|----------|
+| `hubbly.hubbly` | Use the base `/hubbly` command | true |
+| `hubbly.command.*` | Access to all subcommands | op |
+| `hubbly.command.help` | Use `/hubbly help` | - |
+| `hubbly.command.version` | Use `/hubbly version` | - |
+| `hubbly.command.reload` | Use `/hubbly reload` | op |
+| `hubbly.command.give` | Use `/hubbly give` | op |
+| `hubbly.command.menu` | Use `/hubbly menu` | - |
+| `hubbly.command.nextannouncement` | Use `/hubbly nextannouncement` | op |
+| `hubbly.command.convert` | Use `/hubbly convert` | - |
+
+## Tab Completion
+
+The command provides tab completion for:
+- Subcommand names
+- Player names (for the `give` subcommand)
+- Item names (for the `give` subcommand)
+- Menu names (for the `menu` subcommand)
+
+## Source Reference
+
+Implemented in:
+- `HubblyCommand.java:59` - Main command handler
+- `SubCommandManager.java` - Subcommand registration and management

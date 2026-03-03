@@ -1,0 +1,318 @@
+---
+title: Chat Management
+description: Control chat with locking, clearing, word filtering, and command blocking
+---
+
+Hubbly provides comprehensive chat management tools that allow you to moderate and control player chat, including locking chat, clearing messages, filtering inappropriate words, and blocking specific commands.
+
+## Features Overview
+
+- **Chat Locking** - Prevent non-staff from sending messages
+- **Chat Clearing** - Clear chat for all players at once
+- **Word Filtering** - Block or censor inappropriate words
+- **Command Blocking** - Prevent execution of specific commands
+
+## Chat Locking
+
+Lock and unlock chat to prevent players from sending messages. Useful during events or announcements.
+
+### Commands
+
+```bash
+/lockchat
+```
+
+**Permission:** `hubbly.command.lockchat`
+
+**Bypass Permission:** `hubbly.bypass.chat_lock`
+
+### Configuration
+
+```yaml config.yml
+lock_chat: false
+```
+
+Set the default chat lock state. When set to `true`, chat starts locked when the server starts.
+
+### How It Works
+
+<Steps>
+  <Step title="Staff executes /lockchat">
+    A player with the `hubbly.command.lockchat` permission runs the command.
+  </Step>
+  
+  <Step title="Chat state toggles">
+    The chat lock state flips - if unlocked, it locks; if locked, it unlocks.
+  </Step>
+  
+  <Step title="Players are notified">
+    All online players receive a message indicating chat has been locked or unlocked, including who locked/unlocked it.
+  </Step>
+  
+  <Step title="Chat is restricted">
+    Players without the bypass permission cannot send chat messages while locked.
+  </Step>
+</Steps>
+
+<Note>
+Players with the `hubbly.bypass.chat_lock` permission can still send messages even when chat is locked.
+</Note>
+
+## Chat Clearing
+
+Clear chat for all online players instantly.
+
+### Command
+
+```bash
+/clearchat
+```
+
+**Permission:** `hubbly.command.clearchat`
+
+### Implementation
+
+The clear chat command sends 100 empty messages to all online players:
+
+```java ClearChatCommand.java
+@Override
+public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, 
+                         @NotNull String s, @NotNull String[] strings) {
+    if(!sender.hasPermission("hubbly.command.clearchat")) {
+        // Send no permission message
+        return true;
+    }
+
+    for(int i = 0; i <= CHAT_CLEAR_MESSAGE_COUNT; i++) {
+        for(Player onlinePlayer : Bukkit.getOnlinePlayers()) {
+            onlinePlayer.sendMessage("");
+        }
+    }
+
+    plugin.getDebugMode().info("Chat cleared by " + sender.getName());
+    return true;
+}
+```
+
+## Word Filtering (Anti-Swear)
+
+Automatically detect and handle inappropriate words in chat messages.
+
+### Configuration
+
+```yaml config.yml
+blocked_words:
+  enabled: false
+  method: '' # Method can be STAR (for ****) or CANCEL, to cancel message
+  words:
+    - 'Fuck'
+```
+
+### Configuration Options
+
+<AccordionGroup>
+  <Accordion title="enabled" icon="toggle-on">
+    Enable or disable word filtering.
+    
+    **Type:** Boolean  
+    **Default:** `false`
+  </Accordion>
+
+  <Accordion title="method" icon="filter">
+    How to handle blocked words:
+    - `STAR` - Replace the blocked word with asterisks (****)
+    - `CANCEL` - Cancel the entire message and notify the player
+    
+    **Type:** String  
+    **Options:** `STAR`, `CANCEL`
+  </Accordion>
+
+  <Accordion title="words" icon="list">
+    List of words to block or censor.
+    
+    **Type:** List of Strings  
+    **Note:** Case-insensitive matching
+  </Accordion>
+</AccordionGroup>
+
+### Filter Methods
+
+#### CANCEL Method
+
+Blocks the entire message and notifies the player:
+
+```yaml
+blocked_words:
+  enabled: true
+  method: 'CANCEL'
+  words:
+    - 'badword1'
+    - 'badword2'
+```
+
+When a player sends a message containing a blocked word, the message is cancelled and they receive a warning.
+
+#### STAR Method
+
+Replaces blocked words with asterisks:
+
+```yaml
+blocked_words:
+  enabled: true
+  method: 'STAR'
+  words:
+    - 'badword1'
+    - 'badword2'
+```
+
+The message still sends, but the blocked word is replaced: "This is badword1" becomes "This is ********"
+
+### Implementation
+
+The word filter uses regex pattern matching:
+
+```java ChatListener.java
+@EventHandler
+private void onPlayerChat(AsyncPlayerChatEvent event) {
+    FileConfiguration config = plugin.getConfig();
+    if(config.getBoolean("blocked_words.enabled")) {
+        String message = event.getMessage().toLowerCase();
+        String method = config.getString("blocked_words.method", "CANCEL");
+
+        String regex = String.join("|", 
+            blockedWords.stream().map(Pattern::quote).toList()
+        );
+        Pattern pattern = Pattern.compile(regex);
+        Matcher matcher = pattern.matcher(message);
+
+        if (matcher.find()) {
+            String blockedWord = matcher.group();
+
+            if (Objects.equals(method.toUpperCase(), "CANCEL")) {
+                event.setCancelled(true);
+                event.getPlayer().sendMessage(
+                    config.getString("messages.blocked_message")
+                );
+            } else if (Objects.equals(method.toUpperCase(), "STAR")) {
+                message = matcher.replaceAll(
+                    match -> ChatUtils.repeat("*", match.group().length())
+                );
+                event.setMessage(message);
+            }
+        }
+    }
+}
+```
+
+<Warning>
+Word filtering runs on async chat events. Heavy regex patterns or extremely long word lists may impact performance.
+</Warning>
+
+## Command Blocking
+
+Prevent players from executing specific commands.
+
+### Configuration
+
+```yaml config.yml
+# %command% = the command executed
+blocked_commands:
+  - 'pl'
+  - 'plugins'
+  - 'op'
+  - 'stop'
+  - 'reload'
+```
+
+Commands in this list will be blocked for players without the appropriate bypass permissions.
+
+<Note>
+Command blocking is handled by `CommandBlockerListener` which checks commands before they execute.
+</Note>
+
+## Best Practices
+
+<Steps>
+  <Step title="Set up staff permissions">
+    Grant chat management permissions to trusted staff members only:
+    - `hubbly.command.lockchat`
+    - `hubbly.command.clearchat`
+    - `hubbly.bypass.chat_lock`
+  </Step>
+  
+  <Step title="Configure word filter carefully">
+    - Start with `method: STAR` for less disruptive filtering
+    - Test your word list to avoid false positives
+    - Regularly update the blocked words list
+  </Step>
+  
+  <Step title="Block dangerous commands">
+    Always block commands like:
+    - `pl`, `plugins` (information disclosure)
+    - `op`, `deop` (security)
+    - `stop`, `reload` (server control)
+  </Step>
+  
+  <Step title="Monitor and adjust">
+    - Review chat logs regularly
+    - Adjust filter sensitivity based on your community
+    - Gather staff feedback on effectiveness
+  </Step>
+</Steps>
+
+## Disabled Worlds
+
+Chat management features respect the disabled worlds configuration. Word filtering and chat locking can be configured to work globally or respect world restrictions:
+
+```yaml config.yml
+disabled-worlds:
+  - 'world_nether'
+
+invert: false
+```
+
+## Locale Messages
+
+Customize chat management messages in your language files:
+
+```yaml languages/en.yml
+chat_locked: "&cChat has been locked by %player_name%"
+chat_unlocked: "&aChat has been unlocked by %player_name%"
+blocked_message: "&cYour message contains inappropriate content."
+no_permission_command: "&cYou don't have permission to use this command."
+```
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Chat lock not working" icon="circle-exclamation">
+    - Verify the player has `hubbly.command.lockchat` permission
+    - Check that ChatListener is registered
+    - Ensure LockChat manager is initialized
+  </Accordion>
+
+  <Accordion title="Word filter not catching words" icon="filter-circle-xmark">
+    - Confirm `blocked_words.enabled` is `true`
+    - Check words are properly formatted in the list
+    - Verify the player's world is not disabled
+    - Test with simple, obvious words first
+  </Accordion>
+
+  <Accordion title="Players bypassing command blocks" icon="terminal">
+    - Check for conflicting plugin permissions
+    - Verify CommandBlockerListener is registered
+    - Ensure blocked_commands list is properly formatted
+  </Accordion>
+
+  <Accordion title="Clear chat not working" icon="broom">
+    - Confirm sender has `hubbly.command.clearchat` permission
+    - Check for chat plugin conflicts
+    - Verify players are online when command is executed
+  </Accordion>
+</AccordionGroup>
+
+## Related Features
+
+- [Main Configuration](/configuration/config) - Automated chat announcements configuration
+- [Permissions](/api/permissions) - Configure who can manage chat
+- [Main Configuration](/configuration/config) - Customize chat management messages

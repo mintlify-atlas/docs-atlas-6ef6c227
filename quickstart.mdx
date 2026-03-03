@@ -1,80 +1,345 @@
 ---
-title: "Quickstart"
-description: "Start building awesome documentation in minutes"
+title: "Quickstart Guide"
+description: "Get your Hubbly hub server up and running in minutes with this step-by-step guide"
 ---
 
-## Get started in three steps
+Get your Hubbly Minecraft hub plugin configured and running in just a few minutes. This guide will walk you through the essential setup steps to create a fully functional hub server.
 
-Get your documentation site running locally and make your first customization.
+<Steps>
+  <Step title="Install and Generate Configuration">
+    1. Place the `Hubbly.jar` file in your server's `plugins` folder
+    2. Start your server to generate the default configuration files
+    3. Stop the server to edit the configuration files
 
-### Step 1: Set up your local environment
+    You'll find two main configuration files in `plugins/Hubbly/`:
+    - `config.yml` - Main plugin configuration
+    - `items.yml` - Custom item definitions
+  </Step>
 
-<AccordionGroup>
-  <Accordion icon="copy" title="Clone your docs locally">
-    During the onboarding process, you created a GitHub repository with your docs content if you didn't already have one. You can find a link to this repository in your [dashboard](https://dashboard.mintlify.com).
-    
-    To clone the repository locally so that you can make and preview changes to your docs, follow the [Cloning a repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) guide in the GitHub docs.
-  </Accordion>
-  <Accordion icon="rectangle-terminal" title="Start the preview server">
-    1. Install the Mintlify CLI: `npm i -g mint`
-    2. Navigate to your docs directory and run: `mint dev`
-    3. Open `http://localhost:3000` to see your docs live!
-    
-    <Tip>Your preview updates automatically as you edit files.</Tip>
-  </Accordion>
-</AccordionGroup>
+  <Step title="Configure Spawn Location">
+    The spawn point is where players teleport when using `/spawn` or the anti-void feature.
 
-### Step 2: Deploy your changes
+    **Option 1: In-game (Recommended)**
+    ```bash
+    # Stand at your desired spawn location and run:
+    /hubbly setspawn
+    ```
 
-<AccordionGroup>
-  <Accordion icon="github" title="Install our GitHub app">
-    Install the Mintlify GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app).
-    
-    Our GitHub app automatically deploys your changes to your docs site, so you don't need to manage deployments yourself.
-</Accordion>
-<Accordion icon="palette" title="Update your site name and colors">
-    For a first change, let's update the name and colors of your docs site.
+    **Option 2: Manual Configuration**
 
-    1. Open `docs.json` in your editor.
-    2. Change the `"name"` field to your project name.
-    3. Update the `"colors"` to match your brand.
-    4. Save and see your changes instantly at `http://localhost:3000`.
+    Edit `config.yml`:
+    ```yaml config.yml
+    spawn:
+      world: "world"
+      x: 0
+      y: 200
+      z: 0
+      yaw: 0
+      pitch: 0
+      timer: 2  # Seconds before teleport
+      sound: entity.firework_rocket.blast
+    ```
 
-    <Tip>Try changing the primary color to see an immediate difference!</Tip>
-  </Accordion>
-</AccordionGroup>
+    <Note>
+      Yaw and pitch values will automatically round to standard angles (-135, -90, -45, 0, 45, 90, 135) when using `/setspawn`
+    </Note>
+  </Step>
 
-### Step 3: Go live
+  <Step title="Enable Movement Features">
+    Hubbly includes several movement enhancement features. Configure them in `config.yml`:
 
-<Accordion icon="rocket" title="Publish your docs">
-  1. Commit and push your changes.
-  2. Your docs will update and be live in moments!
-</Accordion>
+    **Launchpads**
+    ```yaml config.yml
+    launchpad:
+      enabled: true
+      type: "SLIME_BLOCK"  # Block type that acts as launchpad
+      power: 2             # Horizontal velocity multiplier
+      power_y: 0.5         # Vertical velocity multiplier
+      cooldown: 2          # Cooldown in seconds
+      sound: entity.firework_rocket.blast
+    ```
 
-## Next steps
+    **Double Jump**
+    ```yaml config.yml
+    double_jump:
+      enabled: true
+      power: 1.5     # Horizontal boost
+      power_y: 0.5   # Vertical boost
+      cooldown: 2    # Cooldown in seconds
+    ```
 
-Now that you have your docs running, explore these key features:
+    **Anti-Void Teleport**
+    ```yaml config.yml
+    antivoid:
+      enabled: true  # Teleports players to spawn when they fall into void
+    ```
+
+    <Warning>
+      Make sure to test movement features in a controlled area to ensure power values work well with your hub design
+    </Warning>
+  </Step>
+
+  <Step title="Setup Custom Items">
+    Create custom items that players receive on join or can obtain via commands.
+
+    **Add items to `items.yml`:**
+
+    <CodeGroup>
+    ```yaml Basic Item
+    items:
+      compass:
+        name: "&cCompass"
+        material: COMPASS
+        glow: true
+        lore:
+          - "&7Right click me to open"
+          - "&7the server selector!"
+        actions:
+          - "[MENU] selector"
+    ```
+
+    ```yaml Player Head with Texture
+    items:
+      socials:
+        name: "Socials"
+        material: PLAYER_HEAD
+        url: http://textures.minecraft.net/texture/355e2dc46399b7b9275221fcdc87c66e58d0d3044dcf62af0465122c1cd7e0bc
+        actions:
+          - "[MENU] socials"
+    ```
+
+    ```yaml Item with Command
+    items:
+      shop:
+        name: "&aShop"
+        material: EMERALD_BLOCK
+        lore:
+          - "&7Opens the shop"
+        actions:
+          - "[PLAYER] buy"
+    ```
+    </CodeGroup>
+
+    **Give items to players:**
+    ```bash
+    /hubbly give <player> <item>
+    # Example: /hubbly give Steve compass
+    ```
+
+    **Auto-give items on join:**
+    ```yaml config.yml
+    actions_on_join:
+      - '[ITEM] socials;1'   # Item name;slot number
+      - '[ITEM] compass;5'
+      - '[ITEM] shop;9'
+    ```
+  </Step>
+
+  <Step title="Configure Movement Items">
+    Enable special movement items like grappling hooks and teleportation swords:
+
+    ```yaml config.yml
+    movementitems:
+      grappling_hook:
+        material: FISHING_ROD
+        enabled: true
+        name: "<#FFFF00>Grappling Hook"
+        cooldown: 3
+      
+      aote:
+        material: DIAMOND_SWORD
+        enabled: true
+        name: "<#2d0043>Aspect of the End"
+        cooldown: 1
+      
+      trident:
+        material: TRIDENT
+        enabled: true
+        name: "<#40E0D0>Trident"
+        cooldown: 3
+    ```
+
+    <Note>
+      For `enderbow` and `trident`, do not change the material type as they rely on specific item mechanics
+    </Note>
+  </Step>
+
+  <Step title="Configure Player Settings">
+    Customize the player experience with these essential settings:
+
+    ```yaml config.yml
+    player:
+      forceinventory: true  # Prevent inventory changes
+      
+      experience:
+        enabled: true
+        level: 2025
+        progress: 1.0  # 0.0 to 1.0 or "YEAR" for time-based
+      
+      fly:
+        enabled: true  # Allow flight in hub
+      
+      join_message:
+        enabled: true
+        message: "%name% joined"
+      
+      leave_message:
+        enabled: true
+        message: "%name% left"
+      
+      bossbar:
+        enabled: true
+        color: "PURPLE"
+        animation:
+          change-interval: 40  # Ticks between text changes
+          texts:
+            - '&6&lWelcome'
+            - '<#69b320>&lHello!'
+    ```
+
+    **Join Actions** - Execute actions when players join:
+    ```yaml config.yml
+    actions_on_join:
+      - '[TITLE] <#FFDF00>Hubbly;configure me;20;70;20'
+      - '[SOUND] block.note_block.chime'
+      - '[FIREWORK] BALL;255;0;255;2'
+      - '[ITEM] socials;1'
+    ```
+  </Step>
+
+  <Step title="Configure World Protection">
+    Protect your hub world from unwanted modifications:
+
+    ```yaml config.yml
+    cancel_events:
+      block_place: true
+      block_break: true
+      interact: true       # Prevent interactions (buttons, etc.)
+      damage: true         # Disable player damage
+      weather: true        # Keep weather constant
+      item_drop: true
+      item_pickup: true
+      hunger: true         # Disable hunger
+      mob_spawn: true      # Prevent mob spawning
+      death_messages: true
+      projectiles: false   # Allow projectiles for movement items
+    ```
+
+    <Warning>
+      Keep `projectiles: false` if you're using movement items like the Enderbow or Trident
+    </Warning>
+  </Step>
+
+  <Step title="Reload and Test">
+    After making your configuration changes:
+
+    ```bash
+    # Reload the plugin
+    /hubbly reload
+    ```
+
+    **Testing Checklist:**
+    - [ ] Spawn point teleportation works (`/spawn`)
+    - [ ] Players receive items on join
+    - [ ] Movement features work (double jump, launchpads)
+    - [ ] Movement items function correctly
+    - [ ] Players cannot break/place blocks
+    - [ ] Flight is enabled
+    - [ ] Boss bar displays correctly
+    - [ ] Anti-void teleports players to spawn
+    - [ ] Custom items give correct actions
+  </Step>
+</Steps>
+
+## Common Use Cases
+
+### Setup Player Visibility Toggle
+
+Configure the player visibility item:
+
+```yaml config.yml
+playervisibility:
+  enabled: true
+  visible:
+    item: 'LIME_DYE'
+    text: '&rPlayers: &aVisible'
+  hidden:
+    item: 'GRAY_DYE'
+    text: '&rPlayers: &cHidden'
+```
+
+### Database Configuration
+
+Enable database storage for persistent data:
+
+```yaml config.yml
+database:
+  enabled: true
+  host: localhost
+  port: 3306
+  database: minecraft
+  username: hubbly
+  password: your_secure_password
+```
+
+<Warning>
+  Never commit your database credentials to version control. Use environment variables or secure configuration management
+</Warning>
+
+### Disable Plugin in Specific Worlds
+
+Prevent Hubbly from running in certain worlds:
+
+```yaml config.yml
+disabled-worlds:
+  - 'world_nether'
+  - 'world_the_end'
+
+invert: false  # Set to true to make it a whitelist instead
+```
+
+### Block Commands
+
+Prevent players from using specific commands:
+
+```yaml config.yml
+blocked_commands:
+  - 'pl'
+  - 'plugins'
+  - 'op'
+  - 'stop'
+  - 'reload'
+```
+
+### Setup Announcements
+
+Configure automatic announcements with RGB colors:
+
+```yaml config.yml
+announcements:
+  enabled: true
+  interval: 30  # Seconds between announcements
+  global: true  # Send even in disabled-worlds
+  messages:
+    message1:
+      - '<center><#084CFB>W<#1F63FB>e<#3D81FC>l<#5BA0FC>c<#79BEFC>o<#97DCFD>m<#ADF3FD>e</center>'
+      - ''
+      - '<center>&7Visit our store at &estore.example.com</center>'
+```
+
+## Next Steps
 
 <CardGroup cols={2}>
-
-<Card title="Write Content" icon="pen-to-square" href="/essentials/markdown">
-  Learn MDX syntax and start writing your documentation.
-</Card>
-
-<Card title="Customize style" icon="palette" href="/essentials/settings">
-  Make your docs match your brand perfectly.
-</Card>
-
-<Card title="Add code examples" icon="square-code" href="/essentials/code">
-  Include syntax-highlighted code blocks.
-</Card>
-
-<Card title="API documentation" icon="code" href="/api-reference/introduction">
-  Auto-generate API docs from OpenAPI specs.
-</Card>
-
+  <Card title="Configuration Reference" icon="gear" href="/configuration/config">
+    Explore all available configuration options
+  </Card>
+  <Card title="Commands & Permissions" icon="terminal" href="/api/commands/hubbly">
+    Learn about all available commands
+  </Card>
+  <Card title="Custom Items" icon="cube" href="/guides/creating-custom-items">
+    Create advanced custom items
+  </Card>
+  <Card title="Menus" icon="grid" href="/guides/creating-menus">
+    Build interactive GUI menus
+  </Card>
 </CardGroup>
-
-<Note>
-  **Need help?** See our [full documentation](https://mintlify.com/docs) or join our [community](https://mintlify.com/community).
-</Note>

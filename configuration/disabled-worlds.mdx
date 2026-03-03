@@ -1,0 +1,380 @@
+---
+title: "Disabled Worlds"
+description: "Control which worlds Hubbly features are active in"
+---
+
+Hubbly allows you to disable its features in specific worlds. This is useful for multi-world servers where you only want hub features active in certain worlds.
+
+## Configuration
+
+The disabled worlds feature is configured in `config.yml`:
+
+<ParamField path="disabled-worlds" type="array" default="[]">
+  List of world names where Hubbly features should be disabled.
+  
+  ```yaml
+  disabled-worlds:
+    - 'world_nether'
+    - 'world_the_end'
+    - 'survival'
+  ```
+</ParamField>
+
+<ParamField path="invert" type="boolean" default="false">
+  When set to `true`, inverts the behavior - Hubbly will **only** work in the listed worlds.
+  
+  ```yaml
+  disabled-worlds:
+    - 'hub'
+    - 'lobby'
+  invert: true  # Features only work in hub and lobby
+  ```
+</ParamField>
+
+## How It Works
+
+When a world is in the disabled list:
+
+<Accordion title="Disabled Features">
+  - Player visibility toggle
+  - Movement items (trident, grappling hook, AOTE, enderbow)
+  - Double jump
+  - Launchpads
+  - Force inventory
+  - Custom experience bar
+  - Boss bar
+  - Join/leave messages (unless announcements.global is true)
+  - Event cancellation (blocks, items, damage, etc.)
+  - Chat filters
+</Accordion>
+
+<Accordion title="Features That Still Work">
+  - Commands (like `/spawn`, `/fly`)
+  - Database connections
+  - Anti-world-download (if configured globally)
+  - Announcements (if `announcements.global` is true)
+</Accordion>
+
+## Usage Examples
+
+### Example 1: Standard Hub Setup
+
+Disable Hubbly in survival and creative worlds:
+
+```yaml
+disabled-worlds:
+  - 'world'
+  - 'world_nether'
+  - 'world_the_end'
+  - 'creative'
+  - 'survival'
+
+invert: false
+```
+
+**Result:** Hubbly features only work in worlds NOT listed (e.g., your hub world).
+
+### Example 2: Multi-Hub Setup
+
+Enable Hubbly only in specific hub worlds:
+
+```yaml
+disabled-worlds:
+  - 'hub'
+  - 'lobby'
+  - 'hub_event'
+
+invert: true
+```
+
+**Result:** Hubbly features ONLY work in `hub`, `lobby`, and `hub_event` worlds.
+
+### Example 3: Disable in Nether/End
+
+Keep hub features in overworld but disable in nether/end:
+
+```yaml
+disabled-worlds:
+  - 'world_nether'
+  - 'world_the_end'
+
+invert: false
+```
+
+**Result:** Hub features work everywhere except nether and end dimensions.
+
+## World Names
+
+<Note>
+  World names are **case-sensitive** and must match exactly as they appear in your server files.
+</Note>
+
+To find your world names:
+
+<Tabs>
+  <Tab title="In-Game">
+    Run this command as an operator:
+    
+    ```bash
+    /hubbly debug
+    ```
+    
+    Then check the console for the current world name.
+  </Tab>
+  
+  <Tab title="Server Files">
+    Check your server's root directory. World folders are typically named:
+    
+    - `world` (overworld)
+    - `world_nether` (nether)
+    - `world_the_end` (the end)
+    
+    Or custom names if you use multiworld plugins.
+  </Tab>
+  
+  <Tab title="Multiworld Plugins">
+    If using Multiverse-Core:
+    
+    ```bash
+    /mv list
+    ```
+    
+    If using Multiworld:
+    
+    ```bash
+    /mw list
+    ```
+  </Tab>
+</Tabs>
+
+## Invert Mode
+
+The `invert` option changes how the list behaves:
+
+<Tabs>
+  <Tab title="Normal Mode (invert: false)">
+    **Disabled-worlds list = Blacklist**
+    
+    Features are disabled in listed worlds, enabled everywhere else.
+    
+    ```yaml
+    disabled-worlds:
+      - 'survival'
+      - 'creative'
+    invert: false
+    ```
+    
+    Hub features work in: `hub`, `lobby`, `minigames`, etc.
+    
+    Hub features DON'T work in: `survival`, `creative`
+  </Tab>
+  
+  <Tab title="Invert Mode (invert: true)">
+    **Disabled-worlds list = Whitelist**
+    
+    Features are ONLY enabled in listed worlds, disabled everywhere else.
+    
+    ```yaml
+    disabled-worlds:
+      - 'hub'
+      - 'lobby'
+    invert: true
+    ```
+    
+    Hub features work in: `hub`, `lobby`
+    
+    Hub features DON'T work in: all other worlds
+  </Tab>
+</Tabs>
+
+## Global Announcements
+
+By default, features are disabled in listed worlds. However, announcements can be made global:
+
+```yaml
+announcements:
+  enabled: true
+  interval: 30
+  global: true  # Announcements work even in disabled worlds
+  messages:
+    message1:
+      - 'Welcome to the server!'
+```
+
+<ParamField path="announcements.global" type="boolean" default="true">
+  When `true`, announcements will be sent to players even if they're in a disabled world.
+</ParamField>
+
+## Testing Configuration
+
+<Steps>
+  <Step title="Set debug mode">
+    Enable debug logging in `config.yml`:
+    
+    ```yaml
+    debug: true
+    ```
+  </Step>
+  
+  <Step title="Add test world">
+    Add a world to the disabled list:
+    
+    ```yaml
+    disabled-worlds:
+      - 'world_nether'
+    ```
+  </Step>
+  
+  <Step title="Reload config">
+    Reload the plugin:
+    
+    ```bash
+    /hubbly reload
+    ```
+  </Step>
+  
+  <Step title="Test in-game">
+    - Go to the disabled world
+    - Try to use hub features (double jump, items, etc.)
+    - Features should not work
+    - Check console for debug messages
+  </Step>
+  
+  <Step title="Verify other worlds">
+    - Go to a world NOT in the list
+    - Hub features should work normally
+  </Step>
+</Steps>
+
+## Common Scenarios
+
+### Scenario 1: Dedicated Hub Server
+
+You have a BungeeCord network with a dedicated hub server:
+
+```yaml
+disabled-worlds: []
+invert: false
+```
+
+**Why:** All worlds on this server are hub worlds, so no need to disable anything.
+
+### Scenario 2: Shared Hub + Survival
+
+Your server has both hub and survival worlds:
+
+```yaml
+disabled-worlds:
+  - 'survival'
+  - 'survival_nether'
+  - 'survival_the_end'
+invert: false
+```
+
+**Why:** Hub features should only work in the hub world, not survival.
+
+### Scenario 3: Multiple Hub Lobbies
+
+You have multiple hub worlds but other game worlds:
+
+```yaml
+disabled-worlds:
+  - 'hub_main'
+  - 'hub_event'
+  - 'lobby'
+invert: true
+```
+
+**Why:** Using invert mode, you explicitly define which worlds are hub worlds.
+
+### Scenario 4: Event World
+
+Temporarily enable hub features in an event world:
+
+```yaml
+disabled-worlds:
+  - 'hub'
+  - 'event_pvp'  # Add event world
+invert: true
+```
+
+**Why:** Easy to add/remove worlds from the whitelist for special events.
+
+## Troubleshooting
+
+<Accordion title="Features not working in any world">
+  **Check:**
+  1. Is `invert` set to `true` with an empty list?
+     ```yaml
+     disabled-worlds: []
+     invert: true  # This disables features everywhere!
+     ```
+  2. Are you in the correct world?
+  3. Do you have the required permissions?
+  4. Is debug mode enabled to see console messages?
+</Accordion>
+
+<Accordion title="Features working in disabled world">
+  **Check:**
+  1. World name spelling (case-sensitive)
+  2. Reload the config with `/hubbly reload`
+  3. Check if `announcements.global` is affecting behavior
+  4. Some features (commands) still work in disabled worlds
+</Accordion>
+
+<Accordion title="How to disable in all dimensions of a world">
+  Add all three dimensions:
+  
+  ```yaml
+  disabled-worlds:
+    - 'survival'          # Overworld
+    - 'survival_nether'   # Nether
+    - 'survival_the_end'  # The End
+  ```
+</Accordion>
+
+<Warning>
+  If you use `invert: true` with an empty list, Hubbly will be disabled in ALL worlds:
+  
+  ```yaml
+  disabled-worlds: []
+  invert: true  # DON'T DO THIS unless intentional!
+  ```
+</Warning>
+
+## Best Practices
+
+<Accordion title="Use Invert for Whitelisting">
+  If you have more game worlds than hub worlds, use invert mode:
+  
+  ```yaml
+  disabled-worlds:
+    - 'hub'
+  invert: true
+  ```
+  
+  This is easier than listing every non-hub world.
+</Accordion>
+
+<Accordion title="Use Normal Mode for Blacklisting">
+  If you have more hub worlds than game worlds, use normal mode:
+  
+  ```yaml
+  disabled-worlds:
+    - 'survival'
+    - 'creative'
+  invert: false
+  ```
+</Accordion>
+
+<Accordion title="Document Your Setup">
+  Add comments to your config:
+  
+  ```yaml
+  # Hub features only work in 'hub' and 'lobby' worlds
+  disabled-worlds:
+    - 'hub'
+    - 'lobby'
+  invert: true
+  ```
+</Accordion>

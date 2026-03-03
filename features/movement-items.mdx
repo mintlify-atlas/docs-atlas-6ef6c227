@@ -1,0 +1,239 @@
+---
+title: Movement Items
+description: Special movement items including Trident, AOTE, Grappling Hook, and Enderbow
+---
+
+Hubbly includes four unique movement items that enhance player mobility in your hub server. Each item has configurable cooldowns, custom names with RGB support, and can be enabled/disabled individually.
+
+## Available Movement Items
+
+### Trident
+
+A teleporting trident that teleports players to where it lands.
+
+**How it works:** Throw the trident, and you'll instantly teleport to its landing position. The trident automatically returns to your inventory.
+
+```yaml config.yml
+movementitems:
+  trident:
+    material: TRIDENT # <- do not change this
+    enabled: true
+    name: "<#40E0D0>Trident"
+    cooldown: 3
+```
+
+**Permission:** `hubbly.use.trident`
+
+<Note>
+The trident includes special void protection - if it falls into the void, it automatically returns to your inventory.
+</Note>
+
+### Aspect of the End (AOTE)
+
+A sword that teleports you forward 10 blocks on right-click.
+
+**How it works:** Right-click with the sword to instantly teleport 10 blocks in the direction you're looking.
+
+```yaml config.yml
+movementitems:
+  aote:
+    material: DIAMOND_SWORD # <- you can change this
+    enabled: true
+    name: "<#2d0043>Aspect of the End"
+    cooldown: 1
+```
+
+**Permission:** `hubbly.use.aote`
+
+<Warning>
+Be careful with AOTE near edges - it teleports you exactly 10 blocks forward, which could send you off cliffs or into walls.
+</Warning>
+
+### Grappling Hook
+
+A fishing rod that pulls you to where the hook lands.
+
+**How it works:** Cast the fishing rod, and when it hits a block or reaches max distance, you'll be pulled toward it with velocity-based movement.
+
+```yaml config.yml
+movementitems:
+  grappling_hook:
+    material: FISHING_ROD # <- do not change this
+    enabled: true
+    name: "<#FFFF00>Grappling Hook"
+    cooldown: 3
+```
+
+**Permission:** `hubbly.use.grappling_hook`
+
+### Enderbow
+
+A bow that teleports you to where the arrow lands.
+
+**How it works:** Shoot an arrow, and you'll teleport to where it lands with an enderman teleport sound effect.
+
+```yaml config.yml
+movementitems:
+  enderbow:
+    material: BOW # <- do not change this
+    enabled: false
+    name: "<#A020F0>Enderbow"
+    cooldown: 3
+```
+
+**Permission:** `hubbly.use.enderbow`
+
+<Note>
+When Enderbow is enabled, players are automatically given an arrow in slot 17 on join and after each shot.
+</Note>
+
+## Configuration Options
+
+<AccordionGroup>
+  <Accordion title="material" icon="cube">
+    The Minecraft material type for the item.
+    
+    **Type:** Material (Bukkit Material enum)  
+    **Note:** Some items (Trident, Bow, Fishing Rod) should not be changed as they rely on specific mechanics.
+  </Accordion>
+
+  <Accordion title="enabled" icon="toggle-on">
+    Whether the movement item is enabled on the server.
+    
+    **Type:** Boolean  
+    **Default:** Varies per item
+  </Accordion>
+
+  <Accordion title="name" icon="tag">
+    The display name of the item. Supports RGB color codes using `<#RRGGBB>` format.
+    
+    **Type:** String  
+    **Example:** `"<#40E0D0>Trident"`
+  </Accordion>
+
+  <Accordion title="cooldown" icon="clock">
+    Cooldown in seconds between uses of the item.
+    
+    **Type:** Integer  
+    **Default:** 1-3 seconds depending on item
+  </Accordion>
+</AccordionGroup>
+
+## Giving Items to Players
+
+You can give movement items to players using the Hubbly menu system or through custom item configuration.
+
+### Example: Movement Menu Item
+
+```yaml items.yml
+items:
+  movement:
+    name: "&aMovement"
+    material: FEATHER
+    lore:
+      - "&7Click me to open the movement menu"
+    actions:
+      - "[PLAYER] hubbly menu movement"
+```
+
+Then players can access a GUI to select and receive movement items.
+
+## Implementation Details
+
+### Trident Mechanics
+
+The trident system uses several listeners and managers:
+
+```java TridentListener.java
+@EventHandler
+private void onTridentLand(ProjectileHitEvent event) {
+    if (!(event.getEntity() instanceof Trident trident) || 
+        !(event.getEntity().getShooter() instanceof Player player)) {
+        return;
+    }
+
+    if (trident.getPersistentDataContainer().has(PluginKeys.TRIDENT.getKey())) {
+        trident.remove();
+        player.teleport(trident.getLocation().setDirection(
+            player.getLocation().getDirection()
+        ));
+        player.playSound(player.getLocation(), this.getRandomSound().getSound(), 1.0F, 1.0F);
+        this.replace(player);
+    }
+}
+```
+
+### AOTE Teleportation
+
+The AOTE calculates the forward position using vector mathematics:
+
+```java AoteListener.java
+private Location getLocationInFront(Player player, double distance) {
+    Location currentLocation = player.getLocation();
+    Vector direction = currentLocation.getDirection();
+    Vector frontVector = direction.normalize().multiply(distance);
+    return currentLocation.add(frontVector);
+}
+```
+
+### Grappling Hook Velocity
+
+The grappling hook pulls players with velocity-based movement:
+
+```java RodListener.java
+Location hookLocation = event.getHook().getLocation();
+Location playerLocation = player.getLocation();
+
+double distance = hookLocation.distance(playerLocation);
+Vector direction = hookLocation.toVector()
+    .subtract(playerLocation.toVector())
+    .normalize();
+
+Vector velocity = direction.multiply(distance / 3.5);
+player.setVelocity(velocity);
+```
+
+## Cooldown System
+
+All movement items use a unified cooldown system managed by `CooldownManager`. The cooldown types include:
+
+- `CooldownType.TRIDENT`
+- `CooldownType.AOTE`
+- `CooldownType.GRAPPLING_HOOK`
+- `CooldownType.ENDER_BOW`
+
+## Best Practices
+
+<Steps>
+  <Step title="Balance cooldowns">
+    Adjust cooldowns based on your server's gameplay. AOTE typically has a shorter cooldown (1s) since it only moves 10 blocks.
+  </Step>
+  
+  <Step title="Test in your hub">
+    Test each movement item in your hub environment to ensure they work well with your layout and don't allow access to restricted areas.
+  </Step>
+  
+  <Step title="Use RGB colors">
+    Take advantage of RGB color codes to create visually appealing item names that match your server's theme.
+  </Step>
+  
+  <Step title="Set proper permissions">
+    Use permissions to give movement items to specific ranks or all players based on your server structure.
+  </Step>
+</Steps>
+
+## Disabled Worlds
+
+Movement items automatically respect the disabled worlds configuration and won't function in worlds listed in `disabled-worlds`.
+
+```yaml config.yml
+disabled-worlds:
+  - 'world_nether'
+
+invert: false
+```
+
+## Related Features
+
+- [Double Jump](/features/double-jump) - Another movement enhancement feature
+- [Launchpads](/features/launchpads) - Block-based movement mechanics

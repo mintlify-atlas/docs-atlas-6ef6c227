@@ -1,0 +1,452 @@
+---
+title: Menu & UI Actions
+description: Actions for menu navigation, UI control, and server connectivity
+---
+
+Menu and UI actions control the player's interface, navigate between menus, and handle server connections.
+
+## MENU
+
+Open a menu defined in the `menus/` directory.
+
+<ParamField path="menu_name" type="string" required>
+  The name of the menu file (with or without the `menus/` prefix and `.yml` extension)
+</ParamField>
+
+### Menu Resolution
+
+The action automatically resolves menu paths:
+
+- `selector` → `menus/selector.yml`
+- `menus/selector` → `menus/selector.yml`
+- `shop/main` → `menus/shop/main.yml`
+
+### Examples
+
+<CodeGroup>
+```yaml Simple Menu
+actions:
+  - "[MENU] selector"
+```
+
+```yaml Nested Menu
+actions:
+  - "[MENU] shop/weapons"
+```
+
+```yaml With Full Path
+actions:
+  - "[MENU] menus/socials"
+```
+</CodeGroup>
+
+### Real-World Usage
+
+From `items.yml` - Compass item:
+
+```yaml
+compass:
+  name: "&cCompass"
+  material: COMPASS
+  glow: true
+  lore:
+    - "&7Right click me to open"
+    - "&7the server selector!"
+  actions:
+    - "[MENU] selector"
+```
+
+From `menus/socials.yml` - Discord button:
+
+```yaml
+discord:
+  material: PLAYER_HEAD
+  name: "&3Discord Server"
+  slot: 3
+  actions:
+    - "[LINK] Click me for the discord;Discord link;discord.com/invite"
+```
+
+### Permission Support
+
+Menus can have permissions defined in their configuration:
+
+```yaml
+title: "&cAdmin Panel"
+size: 27
+permission: "hubbly.admin"
+items:
+  # ...
+```
+
+<Note>
+  If a player doesn't have permission to open a menu, they'll receive the `no_permission_use` message from your language file.
+</Note>
+
+---
+
+## CLOSE
+
+Close the player's currently open inventory/menu.
+
+<ParamField path="parameters" type="none">
+  This action takes no parameters.
+</ParamField>
+
+### Examples
+
+```yaml
+actions:
+  - "[CLOSE]"
+```
+
+### Common Patterns
+
+<Accordion title="Execute command and close menu">
+  From `menus/movement.yml`:
+  ```yaml
+  none:
+    material: BARRIER
+    name: "&cNone"
+    slot: 19
+    actions:
+      - "[PLAYER] hubbly movement none"
+      - "[CLOSE]"
+  ```
+</Accordion>
+
+<Accordion title="Close-only filler item">
+  From `menus/selector.yml`:
+  ```yaml
+  fill:
+    slot: -1  # Fill empty slots
+    material: BLACK_STAINED_GLASS_PANE
+    name: " "
+    actions:
+      - "[CLOSE]"
+  ```
+</Accordion>
+
+<Note>
+  The CLOSE action should typically be the last action in a chain, as it immediately closes the inventory.
+</Note>
+
+---
+
+## SLOT
+
+Change which inventory slot the player is holding.
+
+<ParamField path="slot" type="integer" required>
+  The hotbar slot number (1-9). The player will switch to this slot.
+</ParamField>
+
+### Slot Numbering
+
+- Slots are numbered 1-9 (not 0-8)
+- 1 is the leftmost hotbar slot
+- 9 is the rightmost hotbar slot
+
+### Examples
+
+<CodeGroup>
+```yaml First Slot
+actions:
+  - "[SLOT] 1"
+```
+
+```yaml Last Slot
+actions:
+  - "[SLOT] 9"
+```
+
+```yaml Middle Slot
+actions:
+  - "[SLOT] 5"
+```
+</CodeGroup>
+
+### Use Cases
+
+<Accordion title="Give item and auto-select it">
+  ```yaml
+  actions:
+    - "[ITEM] compass;1"
+    - "[SLOT] 1"
+    - "[MESSAGE] &7Right-click the compass to open the menu"
+  ```
+</Accordion>
+
+<Accordion title="Weapon selection system">
+  ```yaml
+  # Select sword from menu
+  actions:
+    - "[CONSOLE] give %player_name% diamond_sword 1"
+    - "[SLOT] 1"
+    - "[CLOSE]"
+  ```
+</Accordion>
+
+---
+
+## LINK
+
+Send a clickable link to the player in chat.
+
+<ParamField path="message" type="string" required>
+  The message text that will be clickable
+</ParamField>
+
+<ParamField path="hover_text" type="string" required>
+  Text shown when hovering over the link
+</ParamField>
+
+<ParamField path="url" type="string" required>
+  The URL to open when clicked
+</ParamField>
+
+### Syntax
+
+```
+[LINK] message;hover_text;url
+```
+
+Parameters are separated by semicolons.
+
+### Examples
+
+<CodeGroup>
+```yaml Discord Link
+actions:
+  - "[LINK] Click me for the discord;Discord link;discord.com/invite"
+```
+
+```yaml TikTok Link
+actions:
+  - "[LINK] Click me to open TikTok!;TikTok link;tiktok.com"
+```
+
+```yaml Website Link
+actions:
+  - "[LINK] &aVisit our website;&7Click to open;https://example.com"
+```
+</CodeGroup>
+
+### Real-World Usage
+
+From `menus/socials.yml`:
+
+```yaml
+items:
+  discord:
+    material: PLAYER_HEAD
+    name: "&3Discord Server"
+    url: http://textures.minecraft.net/texture/7873c12bffb...
+    slot: 3
+    lore:
+      - "&aJoin the Discord Server!"
+    actions:
+      - "[LINK] Click me for the discord;Discord link;discord.com/invite"
+  
+  tiktok:
+    material: PLAYER_HEAD
+    name: "&cTiktok"
+    slot: 5
+    lore:
+      - "&aFollow me on TikTok!"
+    actions:
+      - "[LINK] Click me to open TikTok!;TikTok link;tiktok.com"
+```
+
+### Color Support
+
+All three parameters support color codes:
+
+```yaml
+actions:
+  - "[LINK] <#FFD700>Premium Discord;<#FFA500>Click to join;discord.gg/premium"
+```
+
+<Warning>
+  Make sure your LINK action has exactly 3 parameters separated by semicolons, or it will fail with a warning.
+</Warning>
+
+---
+
+## BUNGEE
+
+Connect the player to another server in your BungeeCord network.
+
+<ParamField path="server_name" type="string" required>
+  The name of the BungeeCord server to connect to
+</ParamField>
+
+### Requirements
+
+- Server must be running on a BungeeCord/Waterfall network
+- The `BungeeCord` plugin messaging channel must be registered
+- Target server must be defined in BungeeCord's config
+
+### Examples
+
+<CodeGroup>
+```yaml Survival Server
+actions:
+  - "[BUNGEE] survival"
+```
+
+```yaml Creative Server
+actions:
+  - "[BUNGEE] creative"
+```
+
+```yaml Minigame Server
+actions:
+  - "[BUNGEE] bedwars-1"
+```
+</CodeGroup>
+
+### Real-World Usage
+
+From `menus/selector.yml` - Server selector menu:
+
+```yaml
+title: "&cServer Selector"
+size: 36
+items:
+  survival:
+    material: APPLE
+    name: "<#CCFFDD>Survival Server"
+    slot: 12
+    lore:
+      - "&aJoin the Survival Server!"
+    actions:
+      - "[BUNGEE] survival"
+  
+  creative:
+    material: PLAYER_HEAD
+    name: "&cCreative Server"
+    slot: 14
+    lore:
+      - "&aJoin the Creative Server!"
+    actions:
+      - "[BUNGEE] creative"
+  
+  factions:
+    material: LEATHER_CHESTPLATE
+    name: "&cFactions Server"
+    slot: 22
+    actions:
+      - "[BUNGEE] factions"
+```
+
+### Automatic Prefix Handling
+
+The action handles both formats:
+
+```yaml
+# Both work the same way:
+actions:
+  - "[BUNGEE] survival"
+  - "[BUNGEE] server survival"  # "server " prefix is stripped
+```
+
+### Enhanced Transfer Experience
+
+<Accordion title="Transfer with feedback">
+  ```yaml
+  actions:
+    - "[SOUND] ENTITY_ENDERMAN_TELEPORT"
+    - "[TITLE] &aTeleporting...;&7Please wait;10;40;10"
+    - "[BUNGEE] survival"
+  ```
+</Accordion>
+
+<Accordion title="Delayed transfer">
+  ```yaml
+  actions:
+    - "[MESSAGE] &7Connecting to &aSurvival &7in 3 seconds..."
+    - "[SOUND] BLOCK_NOTE_BLOCK_PLING"
+    # Add 3 second delay via plugin scheduler if needed
+    - "[BUNGEE] survival"
+  ```
+</Accordion>
+
+<Note>
+  If the BungeeCord channel is not registered, you'll see a warning in the console: "Channel BungeeCord is not registered!"
+</Note>
+
+---
+
+## Complete Examples
+
+<Accordion title="Server selector with feedback">
+  ```yaml
+  survival_button:
+    material: GRASS_BLOCK
+    name: "&aSurvival Server"
+    slot: 12
+    lore:
+      - "&7Click to join!"
+      - ""
+      - "&7Players: &a%bungee_survival%"
+    actions:
+      - "[SOUND] UI_BUTTON_CLICK"
+      - "[MESSAGE] &7Connecting to &aSurvival&7..."
+      - "[BUNGEE] survival"
+  ```
+</Accordion>
+
+<Accordion title="Social media hub">
+  ```yaml
+  title: "&6Follow Us!"
+  size: 27
+  items:
+    discord:
+      material: PLAYER_HEAD
+      name: "&9&lDiscord"
+      slot: 11
+      actions:
+        - "[LINK] &b&nClick to join our Discord!;&7discord.gg/example;discord.gg/example"
+        - "[SOUND] ENTITY_PLAYER_LEVELUP"
+    
+    twitter:
+      material: PLAYER_HEAD
+      name: "&b&lTwitter"
+      slot: 13
+      actions:
+        - "[LINK] &b&nFollow us on Twitter!;&7twitter.com/example;twitter.com/example"
+        - "[SOUND] ENTITY_PLAYER_LEVELUP"
+    
+    back:
+      material: BARRIER
+      name: "&cBack"
+      slot: 22
+      actions:
+        - "[CLOSE]"
+  ```
+</Accordion>
+
+<Accordion title="Multi-step navigation">
+  ```yaml
+  # Main menu button
+  games_menu:
+    material: DIAMOND_SWORD
+    name: "&6Games Menu"
+    slot: 13
+    actions:
+      - "[SOUND] UI_BUTTON_CLICK"
+      - "[MENU] games/main"
+  
+  # In games/main.yml - Bedwars button
+  bedwars:
+    material: RED_BED
+    name: "&cBedwars"
+    slot: 11
+    actions:
+      - "[SOUND] BLOCK_NOTE_BLOCK_PLING"
+      - "[MESSAGE] &7Joining &cBedwars&7..."
+      - "[CLOSE]"
+      - "[BUNGEE] bedwars-1"
+  ```
+</Accordion>

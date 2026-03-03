@@ -1,0 +1,393 @@
+---
+title: Database Integration
+description: MySQL database integration for persistent player data storage
+---
+
+Hubbly includes built-in MySQL database support for storing player data persistently across sessions. This includes player movement modes, visibility preferences, and other customizable data.
+
+## Overview
+
+The database system provides:
+
+- **Automatic connection management** with fallback to local storage
+- **Async player data saving** with queue system
+- **Player movement mode persistence**
+- **Player visibility preference storage**
+- **Automatic table initialization**
+- **Connection validation and error handling**
+
+## Configuration
+
+Configure database settings in `config.yml`:
+
+```yaml config.yml
+database:
+  enabled: true
+  host: localhost
+  port: 3306
+  database: minecraft
+  username: hubbly
+  password: hubblypassword
+```
+
+### Configuration Options
+
+<AccordionGroup>
+  <Accordion title="enabled" icon="toggle-on">
+    Enable or disable database integration.
+    
+    **Type:** Boolean  
+    **Default:** `true`  
+    **Note:** If disabled or connection fails, the plugin falls back to PersistentDataContainer storage
+  </Accordion>
+
+  <Accordion title="host" icon="server">
+    The MySQL server hostname or IP address.
+    
+    **Type:** String  
+    **Default:** `localhost`
+  </Accordion>
+
+  <Accordion title="port" icon="network-wired">
+    The MySQL server port.
+    
+    **Type:** Integer  
+    **Default:** `3306`
+  </Accordion>
+
+  <Accordion title="database" icon="database">
+    The name of the MySQL database to use.
+    
+    **Type:** String  
+    **Default:** `minecraft`
+  </Accordion>
+
+  <Accordion title="username" icon="user">
+    MySQL user account username.
+    
+    **Type:** String  
+    **Default:** `hubbly`
+  </Accordion>
+
+  <Accordion title="password" icon="lock">
+    MySQL user account password.
+    
+    **Type:** String  
+    **Default:** `hubblypassword`  
+    **Security:** Change this from the default!
+  </Accordion>
+</AccordionGroup>
+
+<Warning>
+Always use a strong, unique password for your database user. Never use the default password in production!
+</Warning>
+
+## Database Schema
+
+Hubbly automatically creates the required tables when it connects. The main table structure:
+
+### player_data Table
+
+```sql
+CREATE TABLE IF NOT EXISTS player_data (
+    uuid VARCHAR(36) PRIMARY KEY,
+    name VARCHAR(16) NOT NULL,
+    movement VARCHAR(16),
+    visibility VARCHAR(16),
+    last_seen TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_name (name)
+)
+```
+
+#### Columns
+
+- **uuid**: Player's unique identifier (Primary Key)
+- **name**: Player's current username
+- **movement**: Player's movement mode (`NONE`, or other custom modes)
+- **visibility**: Player visibility preference (`VISIBLE`, `HIDDEN`)
+- **last_seen**: Timestamp of last data save
+- **idx_name**: Index on player name for faster lookups
+
+## How It Works
+
+<Steps>
+  <Step title="Plugin startup">
+    When Hubbly starts, `StorageManager` reads the database configuration and attempts to connect.
+  </Step>
+  
+  <Step title="Connection validation">
+    The connection is validated with a 2-second timeout. If successful, tables are initialized.
+  </Step>
+  
+  <Step title="Fallback on failure">
+    If the connection fails, Hubbly logs a warning and falls back to PersistentDataContainer (local) storage.
+  </Step>
+  
+  <Step title="Player data operations">
+    When players join, their data is loaded. When they change settings or leave, data is saved asynchronously.
+  </Step>
+</Steps>
+
+## Implementation Details
+
+### StorageManager
+
+The `StorageManager` class handles all database operations:
+
+```java StorageManager.java
+public class StorageManager {
+    private AsyncPlayerSaveQueue saveQueue;
+    private Database database;
+    private boolean active;
+
+    public void start() {
+        FileConfiguration config = plugin.getConfig();
+
+        if (!config.getBoolean("database.enabled", false)) {
+            logger.info("Database disabled in config; using local storage only");
+            active = false;
+            return;
+        }
+
+        Credentials credentials = Credentials.fromConfig(config);
+        database = new Database(credentials);
+
+        try {
+            database.connect();
+            
+            try (Connection conn = database.getConnection()) {
+                if (!conn.isValid(2)) {
+                    throw new SQLException("Connection validation failed");
+                }
+            }
+
+            saveQueue = new AsyncPlayerSaveQueue(this::savePlayer);
+            active = true;
+            
+            logger.info("Successfully connected to MySQL database");
+            initializeTables();
+
+        } catch (SQLException e) {
+            logger.warning("Failed to connect to database: " + e.getMessage());
+            logger.warning("Falling back to PersistentDataContainer storage");
+            active = false;
+            database = null;
+        }
+    }
+}
+```
+
+### Async Save Queue
+
+Player data is saved asynchronously to prevent blocking the main server thread:
+
+```java StorageManager.java
+/**
+ * Fire-and-forget save
+ */
+public void enqueueSave(PlayerData snapshot) {
+    if (!active) return;
+    saveQueue.enqueue(snapshot);
+}
+```
+
+### Loading Player Data
+
+```java StorageManager.java
+public PlayerData loadPlayer(UUID uuid, String name) {
+    if (!active) {
+        return defaultPlayer(uuid, name);
+    }
+
+    try (Connection con = database.getConnection();
+         PreparedStatement ps = con.prepareStatement(
+                 "SELECT movement, visibility FROM player_data WHERE uuid = ?"
+         )) {
+
+        ps.setString(1, uuid.toString());
+
+        try (var rs = ps.executeQuery()) {
+            if (rs.next()) {
+                return new PlayerData(
+                        uuid,
+                        name,
+                        new PlayerMovementData(
+                                PlayerMovementMode.valueOf(rs.getString("movement"))
+                        ),
+                        new PlayerVisibilityData(
+                                PlayerVisibilityMode.valueOf(rs.getString("visibility"))
+                        )
+                );
+            }
+        }
+    } catch (SQLException e) {
+        e.printStackTrace();
+        return null;
+    }
+
+    return defaultPlayer(uuid, name);
+}
+```
+
+### Saving Player Data
+
+```java StorageManager.java
+private void savePlayer(PlayerData data) {
+    final String sql = """
+    INSERT INTO player_data (uuid, name, movement, visibility, last_seen)
+    VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
+    ON DUPLICATE KEY UPDATE
+        name = VALUES(name),
+        movement = VALUES(movement),
+        visibility = VALUES(visibility),
+        last_seen = CURRENT_TIMESTAMP
+    """;
+
+    try (Connection con = database.getConnection();
+         PreparedStatement ps = con.prepareStatement(sql)) {
+
+        ps.setString(1, data.getUuid().toString());
+        ps.setString(2, data.getName());
+        ps.setString(3, data.movement().getMode().name());
+        ps.setString(4, data.visibility().getMode().name());
+
+        ps.executeUpdate();
+
+    } catch (SQLException e) {
+        e.printStackTrace();
+    }
+}
+```
+
+<Note>
+The save operation uses `INSERT ... ON DUPLICATE KEY UPDATE` to handle both new players and existing player updates in a single query.
+</Note>
+
+## Fallback Storage
+
+When the database is disabled or unavailable, Hubbly automatically falls back to using Bukkit's **PersistentDataContainer** system. This stores player data locally in the player's .dat file.
+
+### Benefits of Fallback
+
+- **No data loss**: Players can still use features even if the database is down
+- **Seamless transition**: Plugin continues to function normally
+- **Local persistence**: Data is saved per-player and persists across restarts
+
+### Limitations of Fallback
+
+- **Not cross-server**: Data doesn't sync across multiple servers
+- **Player-specific**: Can't query all player data easily
+- **No historical data**: No last_seen timestamps or data history
+
+## Best Practices
+
+<Steps>
+  <Step title="Use a dedicated database user">
+    Create a MySQL user specifically for Hubbly with only the necessary permissions (SELECT, INSERT, UPDATE on the database).
+  </Step>
+  
+  <Step title="Regular backups">
+    Set up automated backups of your MySQL database to prevent data loss.
+  </Step>
+  
+  <Step title="Monitor connections">
+    Check server logs for database connection warnings or errors.
+  </Step>
+  
+  <Step title="Secure credentials">
+    - Use a strong password
+    - Set appropriate file permissions on config.yml
+    - Consider using environment variables for sensitive data
+  </Step>
+  
+  <Step title="Test fallback">
+    Occasionally test the fallback mechanism by temporarily disabling the database to ensure the plugin handles it gracefully.
+  </Step>
+</Steps>
+
+## MySQL Setup Guide
+
+### Creating the Database
+
+```sql
+CREATE DATABASE minecraft CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+```
+
+### Creating the User
+
+```sql
+CREATE USER 'hubbly'@'localhost' IDENTIFIED BY 'your_strong_password';
+GRANT SELECT, INSERT, UPDATE ON minecraft.* TO 'hubbly'@'localhost';
+FLUSH PRIVILEGES;
+```
+
+### For Remote Connections
+
+If your MySQL server is on a different machine:
+
+```sql
+CREATE USER 'hubbly'@'%' IDENTIFIED BY 'your_strong_password';
+GRANT SELECT, INSERT, UPDATE ON minecraft.* TO 'hubbly'@'%';
+FLUSH PRIVILEGES;
+```
+
+<Warning>
+Using '%' allows connections from any host. For production, replace '%' with your specific server IP address for better security.
+</Warning>
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Connection failed" icon="circle-exclamation">
+    **Common causes:**
+    - MySQL server not running
+    - Incorrect host, port, or credentials
+    - Firewall blocking connection
+    - User doesn't have permission from the connecting host
+    
+    **Solutions:**
+    - Verify MySQL is running: `systemctl status mysql`
+    - Check credentials are correct
+    - Test connection manually: `mysql -h HOST -u USERNAME -p`
+    - Check MySQL user host permissions
+  </Accordion>
+
+  <Accordion title="Table not found errors" icon="table">
+    **Cause:** Tables didn't initialize automatically
+    
+    **Solution:**
+    - Check server logs for SQL errors during startup
+    - Verify the database user has CREATE permission
+    - Manually create tables using the schema above
+  </Accordion>
+
+  <Accordion title="Data not persisting" icon="database">
+    **Common causes:**
+    - Database connection failed and fell back to local storage
+    - Save queue not flushing on shutdown
+    - SQL errors during save operations
+    
+    **Solutions:**
+    - Check logs for "Falling back to PersistentDataContainer" message
+    - Verify shutdown method properly flushes the save queue
+    - Enable debug mode to see detailed save operations
+  </Accordion>
+
+  <Accordion title="Slow performance" icon="gauge">
+    **Common causes:**
+    - High network latency to database server
+    - Inefficient queries
+    - No database indexing
+    
+    **Solutions:**
+    - Host database on same machine or local network
+    - Ensure indexes exist (automatically created by Hubbly)
+    - Consider connection pooling for high player counts
+  </Accordion>
+</AccordionGroup>
+
+## Related Features
+
+- [Player Visibility](/features/player-visibility) - Uses database to persist visibility preferences
+- [Movement Items](/features/movement-items) - Movement modes stored in database
+- [Configuration](/configuration/config) - General configuration guide

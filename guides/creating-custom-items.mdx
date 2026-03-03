@@ -1,0 +1,279 @@
+---
+title: Creating Custom Items
+description: Learn how to create custom items with actions, custom textures, and special properties in Hubbly
+---
+
+Custom items in Hubbly allow you to create interactive items with custom names, lore, materials, and actions. Items are defined in the `items.yml` file and can be given to players or used in menus.
+
+## Basic Item Configuration
+
+All custom items are defined in the `items.yml` file under the `items` section. Each item has a unique identifier and properties.
+
+<Steps>
+  <Step title="Create the item definition">
+    Add your item to `items.yml` with a unique identifier:
+
+    ```yaml items.yml
+    items:
+      compass:
+        name: "&cCompass"
+        material: COMPASS
+        lore:
+          - "&7Right click me to open"
+          - "&7the server selector!"
+        actions:
+          - "[MENU] selector"
+    ```
+  </Step>
+
+  <Step title="Configure item properties">
+    Available properties for items:
+
+    - `name` - Display name with color codes
+    - `material` - Bukkit material type
+    - `lore` - List of lore lines
+    - `actions` - List of actions to execute
+    - `glow` - Add enchantment glow effect
+    - `amount` - Stack size (default: 1)
+    - `model_data` - Custom model data ID
+  </Step>
+
+  <Step title="Give the item to players">
+    Use the command to give items:
+
+    ```
+    /hubbly give <item>
+    ```
+
+    For example:
+    ```
+    /hubbly give compass
+    ```
+  </Step>
+</Steps>
+
+## Item Examples
+
+### Glowing Item with Menu Action
+
+```yaml items.yml
+items:
+  compass:
+    name: "&cCompass"
+    material: COMPASS
+    glow: true
+    lore:
+      - "&7Right click me to open"
+      - "&7the server selector!"
+    actions:
+      - "[MENU] selector"
+```
+
+### Custom Player Head with URL
+
+Use custom textures from minecraft.net:
+
+```yaml items.yml
+items:
+  socials:
+    name: "Socials"
+    material: PLAYER_HEAD
+    url: http://textures.minecraft.net/texture/355e2dc46399b7b9275221fcdc87c66e58d0d3044dcf62af0465122c1cd7e0bc
+    actions:
+      - "[MENU] socials"
+```
+
+### Shop Item with Command Action
+
+```yaml items.yml
+items:
+  shop:
+    name: "&aShop"
+    material: EMERALD_BLOCK
+    lore:
+      - "&7Opens the shop"
+    actions:
+      - "[PLAYER] buy"
+```
+
+### Movement Menu Item
+
+```yaml items.yml
+items:
+  movement:
+    name: "&aMovement"
+    material: FEATHER
+    lore:
+      - "&7Click me to open the movement menu"
+    actions:
+      - "[PLAYER] hubbly menu movement"
+```
+
+## Player Head Types
+
+<Tip>
+Hubbly supports three types of player heads:
+</Tip>
+
+<CodeGroup>
+
+```yaml Player Name
+items:
+  player_head:
+    material: PLAYER_HEAD
+    texture: Notch
+```
+
+```yaml Texture URL
+items:
+  custom_head:
+    material: PLAYER_HEAD
+    url: http://textures.minecraft.net/texture/YOUR_TEXTURE_HASH
+```
+
+```yaml HeadDatabase
+items:
+  hdb_head:
+    material: PLAYER_HEAD
+    hdb: 12345
+```
+
+</CodeGroup>
+
+## Item Properties Reference
+
+### Basic Properties
+
+| Property | Type | Description | Example |
+|----------|------|-------------|----------|
+| `name` | String | Item display name | `"&cCompass"` |
+| `material` | String | Bukkit material | `COMPASS` |
+| `lore` | List | Item lore lines | See examples |
+| `actions` | List | Actions on interaction | See [Action System](/guides/action-system) |
+
+### Advanced Properties
+
+| Property | Type | Description | Example |
+|----------|------|-------------|----------|
+| `glow` | Boolean | Enchantment glow | `true` |
+| `amount` | Integer | Stack size | `3` |
+| `model_data` | Integer | Custom model data | `10001` |
+| `url` | String | Player head texture URL | See examples |
+| `texture` | String | Player head texture | `Notch` |
+| `hdb` | Integer | HeadDatabase ID | `12345` |
+| `color` | String | Leather armor color (hex) | `8ad592` |
+
+### Leather Armor Colors
+
+You can customize leather armor colors using hex codes (without the `#`):
+
+```yaml items.yml
+items:
+  colored_armor:
+    name: "&aCustom Armor"
+    material: LEATHER_CHESTPLATE
+    color: 8ad592
+```
+
+## Color Codes and Formatting
+
+Hubbly supports both traditional and hex colors:
+
+### Traditional Color Codes
+
+```yaml
+name: "&c&lRed Bold Text"
+lore:
+  - "&7Gray text"
+  - "&a&oGreen italic"
+```
+
+### Hex Colors
+
+Use the `<#RRGGBB>` format for hex colors:
+
+```yaml
+name: "<#CCFFDD>Custom Color"
+lore:
+  - "<#FF5733>Orange text"
+  - "<#3498DB>Blue text"
+```
+
+## Using Items in Menus
+
+Items can also be used directly in menu configurations. See the [Creating Menus](/guides/creating-menus) guide for more information.
+
+<Note>
+All item properties work the same whether defined in `items.yml` or directly in menu files.
+</Note>
+
+## Common Use Cases
+
+### Hub Selector Item
+
+```yaml items.yml
+items:
+  hub_selector:
+    name: "&6&lHub Selector"
+    material: NETHER_STAR
+    glow: true
+    lore:
+      - ""
+      - "&7Right-click to open"
+      - "&7the server selector"
+      - ""
+    actions:
+      - "[SOUND] ENTITY_PLAYER_LEVELUP"
+      - "[MENU] selector"
+```
+
+### Cosmetics Menu
+
+```yaml items.yml
+items:
+  cosmetics:
+    name: "&d&lCosmetics"
+    material: ENDER_CHEST
+    lore:
+      - "&7Browse cosmetics"
+    actions:
+      - "[PLAYER] cosmetics"
+```
+
+### Teleporter Item
+
+```yaml items.yml
+items:
+  spawn_teleport:
+    name: "&a&lReturn to Spawn"
+    material: ENDER_PEARL
+    lore:
+      - "&7Click to teleport to spawn"
+    actions:
+      - "[PLAYER] spawn"
+      - "[TITLE] &aWelcome!;&7to spawn;10;40;10"
+      - "[SOUND] ENTITY_ENDERMAN_TELEPORT"
+```
+
+## Best Practices
+
+<Warning>
+Make sure to use valid Bukkit material names. Invalid materials will cause errors.
+</Warning>
+
+1. **Unique Identifiers** - Use descriptive, unique IDs for each item
+2. **Color Consistency** - Maintain consistent color schemes across items
+3. **Clear Descriptions** - Write helpful lore that explains item functionality
+4. **Test Actions** - Always test item actions before deploying
+5. **Performance** - Avoid excessive actions on frequently-used items
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Creating Menus" icon="table-cells" href="/guides/creating-menus">
+    Learn how to use items in interactive menus
+  </Card>
+  <Card title="Action System" icon="bolt" href="/guides/action-system">
+    Explore all available actions for items
+  </Card>
+</CardGroup>

@@ -1,0 +1,151 @@
+---
+title: Spawn Management
+description: Configure and manage spawn teleportation with customizable timers and locations
+---
+
+Hubbly provides a comprehensive spawn management system that allows you to set a central spawn point and teleport players with customizable timers and effects.
+
+## Commands
+
+### Setting the Spawn Point
+
+Use `/setspawn` to set the server spawn location to your current position.
+
+```bash
+/setspawn
+```
+
+**Permission:** `hubbly.command.setspawn`
+
+<Note>
+When you use `/setspawn`, the yaw and pitch angles are automatically rounded to the nearest standard angle (-135, -90, -45, 0, 45, 90, 135) for a cleaner spawn experience.
+</Note>
+
+### Teleporting to Spawn
+
+Players can teleport to the spawn point using the `/spawn` command.
+
+```bash
+/spawn
+```
+
+**Permission:** `hubbly.command.spawn`
+
+## Configuration
+
+Configure spawn settings in `config.yml`:
+
+```yaml config.yml
+spawn:
+  world: "world"
+  x: 0
+  y: 200
+  z: 0
+  # YAW AND PITCH WILL ROUND TO {-135, -90, -45, 0, 45, 90, 135} 
+  # WHEN YOU USE /SETSPAWN, YOU CAN MANUALLY OVERRIDE THIS HERE
+  yaw: 0
+  pitch: 0
+  timer: 2
+  sound: entity.firework_rocket.blast
+```
+
+### Configuration Options
+
+<AccordionGroup>
+  <Accordion title="world" icon="globe">
+    The world name where the spawn point is located.
+    
+    **Type:** String  
+    **Default:** `"world"`
+  </Accordion>
+
+  <Accordion title="x, y, z" icon="location-dot">
+    The coordinates of the spawn point.
+    
+    **Type:** Number  
+    **Default:** `0, 200, 0`
+  </Accordion>
+
+  <Accordion title="yaw & pitch" icon="compass">
+    The viewing direction when players spawn.
+    
+    **Type:** Number  
+    **Note:** Values are automatically rounded when using `/setspawn`
+  </Accordion>
+
+  <Accordion title="timer" icon="clock">
+    Delay in seconds before teleporting the player to spawn.
+    
+    **Type:** Integer  
+    **Default:** `2`
+  </Accordion>
+
+  <Accordion title="sound" icon="volume">
+    Sound effect to play when a player teleports to spawn.
+    
+    **Type:** Sound (Bukkit Sound enum)  
+    **Default:** `entity.firework_rocket.blast`
+  </Accordion>
+</AccordionGroup>
+
+## Anti-Void Protection
+
+Hubbly includes automatic anti-void protection that teleports players back to spawn when they fall below the void threshold.
+
+```yaml config.yml
+antivoid:
+  enabled: true
+```
+
+<Warning>
+Make sure your spawn coordinates are set correctly before enabling anti-void protection to prevent players from getting stuck in teleport loops.
+</Warning>
+
+## Implementation Details
+
+The spawn system is implemented through several components:
+
+- **SpawnCommand.java**: Handles the `/spawn` command and initiates the teleport task
+- **SetSpawnCommand.java**: Handles the `/setspawn` command with automatic angle rounding
+- **SpawnTeleportTask**: Manages the delayed teleportation with timer countdown
+- **HubblySpawnEvent**: Allows other plugins to interact with spawn teleportation
+
+### Code Example
+
+Here's how the spawn location is retrieved from the configuration:
+
+```java
+Location spawn = new Location(
+    Bukkit.getWorld(config.getString("spawn.world")),
+    config.getDouble("spawn.x"),
+    config.getDouble("spawn.y"),
+    config.getDouble("spawn.z"),
+    (float) config.getDouble("spawn.yaw"),
+    (float) config.getDouble("spawn.pitch")
+);
+```
+
+## Best Practices
+
+<Steps>
+  <Step title="Choose a safe location">
+    Set your spawn point in a safe, open area where players won't spawn inside blocks or fall immediately.
+  </Step>
+  
+  <Step title="Test the timer">
+    Adjust the `timer` value based on your server's needs. A 2-second delay is usually sufficient to prevent spam.
+  </Step>
+  
+  <Step title="Enable anti-void">
+    Turn on anti-void protection to prevent players from falling into the void and dying.
+  </Step>
+  
+  <Step title="Set proper permissions">
+    Configure permissions to control who can set spawn and who can teleport to spawn.
+  </Step>
+</Steps>
+
+## Related Features
+
+- [Disabled Worlds](/configuration/disabled-worlds) - Prevent spawn teleportation in specific worlds
+- [Main Configuration](/configuration/config) - Configure join/leave messages and actions on join

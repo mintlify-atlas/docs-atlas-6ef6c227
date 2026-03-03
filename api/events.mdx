@@ -1,0 +1,450 @@
+---
+title: Custom Events
+description: Documentation for Hubbly's custom Bukkit events and their usage
+---
+
+## Overview
+
+Hubbly provides custom Bukkit events that developers can listen to for extending functionality or integrating with other plugins. All events are cancellable and follow standard Bukkit event patterns.
+
+<Note>
+  All Hubbly events extend `org.bukkit.event.Event` and implement `Cancellable`, allowing developers to prevent default behavior by calling `setCancelled(true)`.
+</Note>
+
+---
+
+## ActionEvent
+
+Triggered when a Hubbly action is about to be executed. Actions are the core of Hubbly's interactive system, used in menus, items, and configuration.
+
+### Event Properties
+
+<ResponseField name="player" type="Player" required>
+  The player who triggered the action.
+</ResponseField>
+
+<ResponseField name="action" type="Action" required>
+  The Action object being executed. Use `getActionIdentifier()` to get the action type as a string.
+</ResponseField>
+
+<ResponseField name="actionData" type="String" required>
+  The data/parameters passed to the action. Format varies by action type.
+</ResponseField>
+
+<ResponseField name="cancelled" type="boolean" default="false">
+  Whether the event is cancelled. If true, the action will not execute.
+</ResponseField>
+
+### Available Methods
+
+<ParamField path="getPlayer()" type="Player">
+  Returns the player who triggered this action.
+</ParamField>
+
+<ParamField path="getActionIdentifier()" type="String">
+  Returns the identifier of the action (e.g., "PLAYER", "SOUND", "MESSAGE").
+</ParamField>
+
+<ParamField path="getActionData()" type="String">
+  Returns the data string passed to the action.
+</ParamField>
+
+<ParamField path="isCancelled()" type="boolean">
+  Returns whether this event is cancelled.
+</ParamField>
+
+<ParamField path="setCancelled(boolean)" type="void">
+  Set whether this event should be cancelled.
+</ParamField>
+
+### Usage Example
+
+```java
+import me.calrl.hubbly.events.ActionEvent;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+
+public class CustomListener implements Listener {
+    
+    @EventHandler
+    public void onAction(ActionEvent event) {
+        // Get event information
+        Player player = event.getPlayer();
+        String actionType = event.getActionIdentifier();
+        String actionData = event.getActionData();
+        
+        // Log the action
+        plugin.getLogger().info(player.getName() + " executed: " + actionType);
+        
+        // Cancel specific actions
+        if (actionType.equals("BUNGEE") && !player.hasPermission("hub.bungee")) {
+            event.setCancelled(true);
+            player.sendMessage("You don't have permission to change servers!");
+        }
+    }
+}
+```
+
+### Action Types
+
+The following action identifiers are available in Hubbly:
+
+<Accordion title="Available Action Types">
+  <ResponseField name="PLAYER" type="action">
+    Executes a command as the player.
+    
+    **Format:** `[PLAYER] command`
+    
+    **Example:** `[PLAYER] spawn`
+  </ResponseField>
+
+  <ResponseField name="CONSOLE" type="action">
+    Executes a command from the console.
+    
+    **Format:** `[CONSOLE] command`
+    
+    **Example:** `[CONSOLE] give %player% diamond 1`
+  </ResponseField>
+
+  <ResponseField name="MESSAGE" type="action">
+    Sends a message to the player.
+    
+    **Format:** `[MESSAGE] text`
+    
+    **Example:** `[MESSAGE] &aWelcome to the hub!`
+  </ResponseField>
+
+  <ResponseField name="BROADCAST" type="action">
+    Broadcasts a message to all players.
+    
+    **Format:** `[BROADCAST] text`
+    
+    **Example:** `[BROADCAST] &e%player% &7found a secret!`
+  </ResponseField>
+
+  <ResponseField name="SOUND" type="action">
+    Plays a sound to the player.
+    
+    **Format:** `[SOUND] sound_name`
+    
+    **Example:** `[SOUND] ENTITY_PLAYER_LEVELUP`
+  </ResponseField>
+
+  <ResponseField name="TITLE" type="action">
+    Displays a title to the player.
+    
+    **Format:** `[TITLE] title;subtitle;fadeIn;stay;fadeOut`
+    
+    **Example:** `[TITLE] &aWelcome!;&7Enjoy your stay;10;70;20`
+  </ResponseField>
+
+  <ResponseField name="GAMEMODE" type="action">
+    Changes the player's game mode.
+    
+    **Format:** `[GAMEMODE] mode`
+    
+    **Example:** `[GAMEMODE] CREATIVE`
+  </ResponseField>
+
+  <ResponseField name="FIREWORK" type="action">
+    Spawns a firework at the player's location.
+    
+    **Format:** `[FIREWORK]`
+  </ResponseField>
+
+  <ResponseField name="EFFECT" type="action">
+    Applies a potion effect to the player.
+    
+    **Format:** `[EFFECT] effect:duration:amplifier`
+    
+    **Example:** `[EFFECT] SPEED:200:1`
+  </ResponseField>
+
+  <ResponseField name="ITEM" type="action">
+    Gives an item to the player.
+    
+    **Format:** `[ITEM] item_id`
+    
+    **Example:** `[ITEM] custom_item_1`
+  </ResponseField>
+
+  <ResponseField name="LAUNCH" type="action">
+    Launches the player into the air.
+    
+    **Format:** `[LAUNCH] x,y,z`
+    
+    **Example:** `[LAUNCH] 0,2,0`
+  </ResponseField>
+
+  <ResponseField name="BUNGEE" type="action">
+    Sends the player to another BungeeCord server.
+    
+    **Format:** `[BUNGEE] server_name`
+    
+    **Example:** `[BUNGEE] lobby-2`
+  </ResponseField>
+
+  <ResponseField name="MENU" type="action">
+    Opens a custom menu for the player.
+    
+    **Format:** `[MENU] menu_id`
+    
+    **Example:** `[MENU] selector`
+  </ResponseField>
+
+  <ResponseField name="LINK" type="action">
+    Sends a clickable link to the player.
+    
+    **Format:** `[LINK] url`
+    
+    **Example:** `[LINK] https://example.com`
+  </ResponseField>
+
+  <ResponseField name="CLOSE" type="action">
+    Closes the player's currently open inventory.
+    
+    **Format:** `[CLOSE]`
+  </ResponseField>
+
+  <ResponseField name="CLEAR" type="action">
+    Clears the player's inventory.
+    
+    **Format:** `[CLEAR]`
+  </ResponseField>
+
+  <ResponseField name="SLOT" type="action">
+    Gives an item to a specific inventory slot.
+    
+    **Format:** `[SLOT] slot:item_id`
+    
+    **Example:** `[SLOT] 4:compass`
+  </ResponseField>
+</Accordion>
+
+---
+
+## HubblySpawnEvent
+
+Triggered when a player is being teleported to the hub spawn location.
+
+### Event Properties
+
+<ResponseField name="player" type="Player" required>
+  The player being teleported to spawn.
+</ResponseField>
+
+<ResponseField name="location" type="Location" required>
+  The spawn location the player will be teleported to.
+</ResponseField>
+
+<ResponseField name="cancelled" type="boolean" default="false">
+  Whether the event is cancelled. If true, the teleport will not occur.
+</ResponseField>
+
+### Available Methods
+
+<ParamField path="getPlayer()" type="Player">
+  Returns the player being teleported.
+</ParamField>
+
+<ParamField path="getLocation()" type="Location">
+  Returns the spawn location.
+</ParamField>
+
+<ParamField path="isCancelled()" type="boolean">
+  Returns whether this event is cancelled.
+</ParamField>
+
+<ParamField path="setCancelled(boolean)" type="void">
+  Set whether this event should be cancelled.
+</ParamField>
+
+### Usage Example
+
+```java
+import me.calrl.hubbly.events.HubblySpawnEvent;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+
+public class SpawnListener implements Listener {
+    
+    @EventHandler
+    public void onHubblySpawn(HubblySpawnEvent event) {
+        Player player = event.getPlayer();
+        Location spawnLocation = event.getLocation();
+        
+        // Log spawn teleports
+        plugin.getLogger().info(player.getName() + " is spawning at: " + 
+            spawnLocation.getBlockX() + ", " + 
+            spawnLocation.getBlockY() + ", " + 
+            spawnLocation.getBlockZ());
+        
+        // Prevent spawning in certain conditions
+        if (player.hasMetadata("in_event")) {
+            event.setCancelled(true);
+            player.sendMessage("You cannot spawn while in an event!");
+        }
+        
+        // Apply effects on spawn
+        if (!event.isCancelled()) {
+            player.setHealth(20.0);
+            player.setFoodLevel(20);
+            player.getInventory().clear();
+        }
+    }
+}
+```
+
+### When It's Called
+
+The `HubblySpawnEvent` is triggered:
+- When a player executes `/spawn`
+- When a player joins the server (if configured)
+- When Hubbly programmatically sends a player to spawn
+
+---
+
+## Event Registration
+
+To listen to Hubbly events in your plugin, register your listener class:
+
+```java
+import org.bukkit.plugin.java.JavaPlugin;
+
+public class YourPlugin extends JavaPlugin {
+    
+    @Override
+    public void onEnable() {
+        // Register your event listener
+        getServer().getPluginManager().registerEvents(
+            new CustomListener(), 
+            this
+        );
+    }
+}
+```
+
+---
+
+## Event Priorities
+
+You can control when your listener runs relative to other listeners using event priorities:
+
+```java
+import org.bukkit.event.EventPriority;
+
+@EventHandler(priority = EventPriority.HIGH)
+public void onAction(ActionEvent event) {
+    // This runs after NORMAL priority listeners
+}
+```
+
+### Priority Levels
+
+1. **LOWEST** - Runs first
+2. **LOW** - Runs early
+3. **NORMAL** - Default priority (most listeners)
+4. **HIGH** - Runs late
+5. **HIGHEST** - Runs last
+6. **MONITOR** - Read-only, runs after everything (don't modify events here)
+
+---
+
+## Best Practices
+
+<Accordion title="Event Handling Tips">
+  ### Don't Cancel Unnecessarily
+  Only cancel events when you have a good reason. Cancelling events can break other plugins' functionality.
+
+  ### Use Appropriate Priorities
+  - Use **LOWEST** if you need to modify event data before others
+  - Use **NORMAL** for most cases
+  - Use **HIGH** if you want to override others' decisions
+  - Use **MONITOR** only for logging/tracking (never modify)
+
+  ### Check for Cancellation
+  ```java
+  @EventHandler
+  public void onAction(ActionEvent event) {
+      if (event.isCancelled()) {
+          return; // Don't process cancelled events
+      }
+      // Your logic here
+  }
+  ```
+
+  ### Handle Exceptions
+  Wrap your event logic in try-catch to prevent breaking other plugins:
+  ```java
+  @EventHandler
+  public void onAction(ActionEvent event) {
+      try {
+          // Your logic here
+      } catch (Exception e) {
+          plugin.getLogger().warning("Error handling action: " + e.getMessage());
+      }
+  }
+  ```
+</Accordion>
+
+---
+
+## Common Use Cases
+
+### Logging Player Actions
+
+```java
+@EventHandler
+public void onAction(ActionEvent event) {
+    String log = String.format("%s executed action %s with data: %s",
+        event.getPlayer().getName(),
+        event.getActionIdentifier(),
+        event.getActionData());
+    plugin.getLogger().info(log);
+}
+```
+
+### Custom Permission Checks
+
+```java
+@EventHandler
+public void onAction(ActionEvent event) {
+    String actionType = event.getActionIdentifier();
+    Player player = event.getPlayer();
+    
+    if (actionType.equals("GAMEMODE")) {
+        if (!player.hasPermission("custom.gamemode")) {
+            event.setCancelled(true);
+            player.sendMessage("No permission!");
+        }
+    }
+}
+```
+
+### Modifying Spawn Location
+
+```java
+@EventHandler
+public void onSpawn(HubblySpawnEvent event) {
+    Player player = event.getPlayer();
+    
+    // VIP players spawn at a different location
+    if (player.hasPermission("hub.vip")) {
+        event.setCancelled(true);
+        Location vipSpawn = new Location(player.getWorld(), 100, 64, 100);
+        player.teleport(vipSpawn);
+    }
+}
+```
+
+### Integration with Other Plugins
+
+```java
+@EventHandler
+public void onAction(ActionEvent event) {
+    // Award points when players use actions
+    if (event.getActionIdentifier().equals("BUNGEE")) {
+        PointsAPI.givePoints(event.getPlayer(), 10);
+    }
+}
+```

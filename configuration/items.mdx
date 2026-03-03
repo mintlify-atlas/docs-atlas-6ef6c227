@@ -1,0 +1,310 @@
+---
+title: "Items Configuration"
+description: "Configure custom items for your Hubbly hub server"
+---
+
+The `items.yml` file allows you to create custom items that can be given to players with special actions, lore, and appearance.
+
+## Overview
+
+Items defined in this file can be:
+- Given to players with `/hubbly give <item>`
+- Added to player inventories on join via `actions_on_join` in config.yml
+- Used in menu configurations
+
+## Item Structure
+
+Each item is defined under the `items` section with the following properties:
+
+<ParamField path="name" type="string" required>
+  Display name of the item. Supports color codes and hex colors.
+</ParamField>
+
+<ParamField path="material" type="material" required>
+  The Minecraft material for the item (e.g., COMPASS, PLAYER_HEAD, EMERALD_BLOCK).
+</ParamField>
+
+<ParamField path="glow" type="boolean" default="false">
+  Add enchantment glow effect to the item.
+</ParamField>
+
+<ParamField path="lore" type="array">
+  List of lore lines displayed when hovering over the item.
+  
+  ```yaml
+  lore:
+    - "&7First line"
+    - "&7Second line"
+  ```
+</ParamField>
+
+<ParamField path="url" type="string">
+  For PLAYER_HEAD items only. URL to the texture for custom player heads.
+</ParamField>
+
+<ParamField path="actions" type="array">
+  List of actions to execute when the item is interacted with.
+</ParamField>
+
+## Available Actions
+
+<Tabs>
+  <Tab title="Menu">
+    Open a custom menu when the item is clicked.
+    
+    ```yaml
+    actions:
+      - "[MENU] selector"
+    ```
+    
+    The menu name must match a file in the `menus/` folder.
+  </Tab>
+  
+  <Tab title="Player Command">
+    Execute a command as the player.
+    
+    ```yaml
+    actions:
+      - "[PLAYER] buy"
+      - "[PLAYER] hubbly menu movement"
+    ```
+    
+    Do not include the `/` prefix.
+  </Tab>
+  
+  <Tab title="Console Command">
+    Execute a command from console.
+    
+    ```yaml
+    actions:
+      - "[CONSOLE] say Hello everyone!"
+    ```
+  </Tab>
+  
+  <Tab title="Message">
+    Send a message to the player.
+    
+    ```yaml
+    actions:
+      - "[MESSAGE] &aThis is a message!"
+    ```
+  </Tab>
+</Tabs>
+
+## Player Heads
+
+For custom player heads, use the `PLAYER_HEAD` material and provide a texture URL:
+
+```yaml
+items:
+  custom_head:
+    name: "Custom Head"
+    material: PLAYER_HEAD
+    url: http://textures.minecraft.net/texture/355e2dc46399b7b9275221fcdc87c66e58d0d3044dcf62af0465122c1cd7e0bc
+```
+
+<Note>
+  You can get texture URLs from websites like [MinecraftHeads.com](https://minecraft-heads.com) or [Freshcoal.com](https://freshcoal.com/maincollection).
+</Note>
+
+## Default Items
+
+### Compass (Server Selector)
+
+```yaml
+compass:
+  name: "&cCompass"
+  material: COMPASS
+  glow: true
+  lore:
+    - "&7Right click me to open"
+    - "&7the server selector!"
+  actions:
+    - "[MENU] selector"
+```
+
+A glowing compass that opens the server selector menu when right-clicked.
+
+### Socials
+
+```yaml
+socials:
+  name: "Socials"
+  material: PLAYER_HEAD
+  url: http://textures.minecraft.net/texture/355e2dc46399b7b9275221fcdc87c66e58d0d3044dcf62af0465122c1cd7e0bc
+  actions:
+    - "[MENU] socials"
+```
+
+A custom player head that opens the socials menu.
+
+### Shop
+
+```yaml
+shop:
+  name: "&aShop"
+  material: EMERALD_BLOCK
+  lore:
+    - "&7Opens the shop"
+  actions:
+    - "[PLAYER] buy"
+```
+
+An emerald block that executes the `/buy` command as the player.
+
+### Movement Menu Item
+
+```yaml
+movement:
+  name: "&aMovement"
+  material: FEATHER
+  lore:
+    - "&7Click me to open the movement menu"
+  actions:
+    - "[PLAYER] hubbly menu movement"
+```
+
+A feather that opens the movement selection menu.
+
+## Usage Examples
+
+### Giving Items to Players
+
+Use the command:
+```bash
+/hubbly give <item_id>
+```
+
+For example:
+```bash
+/hubbly give compass
+/hubbly give socials
+```
+
+### Auto-Give on Join
+
+Add items to player inventories automatically in `config.yml`:
+
+```yaml
+actions_on_join:
+  - '[ITEM] socials;1'    # Slot 1
+  - '[ITEM] compass;5'    # Slot 5
+  - '[ITEM] shop;9'       # Slot 9
+```
+
+<Warning>
+  Slot numbers are 1-based (1-9 for hotbar). Make sure `player.forceinventory` is enabled in config.yml for this to work properly.
+</Warning>
+
+## Creating Custom Items
+
+### Example: Teleport Hub Item
+
+```yaml
+items:
+  hub_teleport:
+    name: "<#FFD700>Hub Teleporter"
+    material: NETHER_STAR
+    glow: true
+    lore:
+      - "&7Click to return to hub"
+      - ""
+      - "&eRight Click to Use"
+    actions:
+      - "[PLAYER] spawn"
+      - "[SOUND] entity.enderman.teleport"
+      - "[MESSAGE] &aTeleporting to hub..."
+```
+
+### Example: Information Book
+
+```yaml
+items:
+  info_book:
+    name: "&6Server Information"
+    material: WRITTEN_BOOK
+    lore:
+      - "&7Learn about our server"
+    actions:
+      - "[MENU] info"
+```
+
+### Example: Multiple Actions
+
+```yaml
+items:
+  special_item:
+    name: "&dSpecial Item"
+    material: DIAMOND
+    glow: true
+    lore:
+      - "&7Does multiple things!"
+    actions:
+      - "[MESSAGE] &aActivating special item..."
+      - "[SOUND] block.note_block.pling"
+      - "[PLAYER] effect give @s minecraft:speed 10 1"
+      - "[TITLE] &6Special!;&eActivated;10;40;10"
+```
+
+## Complete Example
+
+<Accordion title="View Full items.yml Example">
+```yaml
+# Custom Items that you make myself, please follow the format.
+# To get these items use /hubbly give <item>
+# For compass, I would use /hubbly give compass
+items:
+  compass:
+    name: "&cCompass"
+    material: COMPASS
+    glow: true
+    lore:
+      - "&7Right click me to open"
+      - "&7the server selector!"
+    actions:
+      - "[MENU] selector"
+  
+  socials:
+    name: "Socials"
+    material: PLAYER_HEAD
+    url: http://textures.minecraft.net/texture/355e2dc46399b7b9275221fcdc87c66e58d0d3044dcf62af0465122c1cd7e0bc
+    actions:
+      - "[MENU] socials"
+  
+  shop:
+    name: "&aShop"
+    material: EMERALD_BLOCK
+    lore:
+      - "&7Opens the shop"
+    actions:
+      - "[PLAYER] buy"
+  
+  movement:
+    name: "&aMovement"
+    material: FEATHER
+    lore:
+      - "&7Click me to open the movement menu"
+    actions:
+      - "[PLAYER] hubbly menu movement"
+```
+</Accordion>
+
+## Tips
+
+<Accordion title="Best Practices">
+  - Use descriptive item IDs (lowercase, underscores for spaces)
+  - Add lore to explain what each item does
+  - Use the `glow` property sparingly for important items
+  - Test items with `/hubbly give` before adding to `actions_on_join`
+  - Keep action lists concise - too many actions can be overwhelming
+</Accordion>
+
+<Accordion title="Color Codes">
+  Hubbly supports both legacy color codes and hex colors:
+  
+  **Legacy codes:** `&a`, `&c`, `&e`, `&6`, etc.
+  
+  **Hex colors:** `<#FF00FF>`, `<#FFD700>`, `<#00FFFF>`, etc.
+  
+  You can mix both in the same string!
+</Accordion>

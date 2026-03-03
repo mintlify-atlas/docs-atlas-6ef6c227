@@ -1,0 +1,551 @@
+---
+title: Custom Items System
+description: Create and manage custom items with actions, NBT data, and special behaviors
+---
+
+## Overview
+
+Hubbly's custom items system allows you to create interactive items with attached actions, custom textures, persistent data, and special movement abilities. Items can be defined in configuration files or programmatically.
+
+## How Items Work
+
+The ItemsManager handles all custom item registration, creation, and action execution:
+
+```java
+// From ItemsManager.java:42-53
+public ItemsManager(Hubbly plugin) {
+    this.plugin = plugin;
+    this.debugMode = plugin.getDebugMode();
+    this.config = plugin.getConfig();
+    this.itemsFile = new File(plugin.getDataFolder(), "items.yml");
+    this.actionManager = plugin.getActionManager();
+    this.itemsConfig = plugin.getItemsConfig();
+    this.listeners = new HashMap<>();
+    
+    this.registerItems();
+}
+```
+
+## Item Types
+
+Hubbly supports two main types of custom items:
+
+### 1. Config-Based Items (ConfigItem)
+
+Defined in `items.yml` and loaded automatically:
+
+```yaml
+# items.yml
+items:
+  server_selector:
+    material: COMPASS
+    name: "&6&lServer Selector"
+    lore:
+      - "&7Right-click to open"
+      - "&7the server selector!"
+    actions:
+      - "[MENU] selector"
+      - "[SOUND] UI_BUTTON_CLICK"
+    custom_model_data: 1001
+```
+
+<Accordion title="ConfigItem Implementation">
+```java
+// From ConfigItem.java:64-90
+@Override
+public ItemStack createItem() {
+    FileManager manager = plugin.getFileManager();
+    FileConfiguration config = manager.getConfig("items.yml");
+    
+    if (!config.contains("items." + itemKey)) {
+        debugMode.warn("Item '" + itemKey + "' not found in items.yml.");
+        return null;
+    }
+    
+    ConfigurationSection section = config.getConfigurationSection("items." + itemKey);
+    if (section == null) {
+        debugMode.warn("Section for item '" + itemKey + "' is null.");
+        return null;
+    }
+    
+    ItemStack item = new ItemBuilder()
+        .fromConfig(player, section)
+        .build();
+    
+    if (item == null || item.getType() == Material.AIR) {
+        debugMode.warn("Item '" + itemKey + "' is invalid or returned AIR.");
+        return null;
+    }
+    
+    return item;
+}
+```
+</Accordion>
+
+### 2. Programmatic Items (Movement Items)
+
+Special items with custom behaviors like teleportation:
+
+```java
+// From ItemsManager.java:63-66
+this.register("trident", new TridentItem(plugin), new TridentListener(plugin));
+this.register("enderbow", new EnderbowItem(plugin), new EnderbowListener(plugin));
+this.register("aote", new AoteItem(plugin), new AoteListener(plugin));
+this.register("grappling_hook", new RodItem(plugin), new RodListener(plugin));
+```
+
+## Item Registration
+
+Items are registered during plugin initialization:
+
+```java
+// From ItemsManager.java:59-86
+private void registerItems() {
+    this.setConfig(plugin.getFileManager().getConfig("items.yml"));
+    
+    // Register special visibility item
+    items.put("playervisibility", new PlayerVisibilityItem());
+    
+    // Register movement items with listeners
+    this.register("trident", new TridentItem(plugin), new TridentListener(plugin));
+    this.register("enderbow", new EnderbowItem(plugin), new EnderbowListener(plugin));
+    this.register("aote", new AoteItem(plugin), new AoteListener(plugin));
+    this.register("grappling_hook", new RodItem(plugin), new RodListener(plugin));
+    
+    // Register all items from items.yml
+    if (itemsConfig.getConfigurationSection("items") != null) {
+        ConfigurationSection section = itemsConfig.getConfigurationSection("items");
+        
+        for (String itemKey : section.getKeys(false)) {
+            items.put(ChatColor.stripColor(itemKey.toLowerCase()), 
+                     new ConfigItem(itemKey, plugin));
+            debugMode.info("Registered item: " + itemKey);
+        }
+    } else {
+        debugMode.warn("No items found in items.yml");
+    }
+}
+```
+
+## The CustomItem Interface
+
+All custom items implement this interface:
+
+```java
+// From CustomItem.java (interface)
+package me.calrl.hubbly.interfaces;
+
+import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
+
+public interface CustomItem {
+    ItemStack createItem();
+    void setPlayer(Player player);
+}
+```
+
+### Implementation Example: AOTE Item
+
+```java
+// From AoteItem.java:42-58
+@Override
+public ItemStack createItem() {
+    FileConfiguration config = plugin.getConfig();
+    
+    ConfigurationSection section = config.getConfigurationSection("movementitems.aote");
+    if(section == null) {
+        plugin.getLogger().warning("movementitems.aote is null.");
+        return null;
+    }
+    
+    ItemBuilder builder = new ItemBuilder();
+    ItemStack item = builder
+        .fromConfig(this.player, section)
+        .addPersistentData(PluginKeys.AOTE.getKey(), 
+                          PersistentDataType.STRING, "aote")
+        .build();
+    return item;
+}
+```
+
+## Actions on Items
+
+Items can have actions attached that execute when interacted with:
+
+### Storing Actions in NBT
+
+Actions are stored in the item's PersistentDataContainer:
+
+```java
+ItemStack item = new ItemBuilder(Material.COMPASS)
+    .setName("&6Server Selector")
+    .addPersistentData(PluginKeys.ACTIONS_KEY.getKey(), 
+                      PersistentDataType.STRING, 
+                      "[MENU] selector,[SOUND] UI_BUTTON_CLICK")
+    .build();
+```
+
+### Retrieving Actions
+
+```java
+// From ItemsManager.java:143-160
+public List<String> getActions(ItemStack item) {
+    if (item == null || !item.hasItemMeta()) {
+        return null;
+    }
+    
+    ItemMeta meta = item.getItemMeta();
+    PersistentDataContainer container = meta.getPersistentDataContainer();
+    
+    if(container == null) {
+        return null;
+    }
+    
+    String actionsString = container.get(
+        new NamespacedKey(plugin, "customActions"), 
+        PersistentDataType.STRING
+    );
+    
+    if (actionsString == null || actionsString.isEmpty()) {
+        return null;
+    }
+    
+    return Arrays.asList(actionsString.split(","));
+}
+```
+
+### Executing Item Actions
+
+```java
+// From ItemsManager.java:162-169
+public void executeActions(Player player, ItemStack item) {
+    List<String> actions = getActions(item);
+    if(actions == null || actions.isEmpty()) {
+        return;
+    }
+    actionManager.executeActions(player, actions);
+}
+```
+
+## Item Configuration Structure
+
+### Basic Item Definition
+
+```yaml
+items:
+  my_custom_item:
+    material: DIAMOND
+    name: "&b&lCustom Diamond"
+    lore:
+      - "&7This is a custom item"
+      - "&7with special properties"
+    actions:
+      - "[MESSAGE] &aYou used the custom item!"
+      - "[SOUND] ENTITY_PLAYER_LEVELUP"
+```
+
+### Advanced Item Features
+
+<Accordion title="Custom Model Data">
+```yaml
+items:
+  custom_sword:
+    material: DIAMOND_SWORD
+    name: "&c&lFlame Sword"
+    custom_model_data: 5001  # Links to resource pack model
+    actions:
+      - "[EFFECT] FIRE_RESISTANCE;600;0"
+```
+</Accordion>
+
+<Accordion title="Player Heads with Textures">
+```yaml
+items:
+  custom_head:
+    material: PLAYER_HEAD
+    name: "&6Custom Head"
+    value: "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvYjBhN2IzNGM4MzIxMzJkNTg3OWY2MjNlNjZkOGQ2ZjRmZDExYmI1YzEyYmY3Mjk1ODVhMWRhNDc2NDM5MWRiYSJ9fX0="
+```
+
+The `value` field contains base64-encoded texture data for custom player head skins.
+</Accordion>
+
+<Accordion title="Enchantments and Flags">
+```yaml
+items:
+  glowing_item:
+    material: STICK
+    name: "&e&lMagic Wand"
+    enchantments:
+      - "DURABILITY:1"
+    flags:
+      - HIDE_ENCHANTS
+      - HIDE_ATTRIBUTES
+```
+</Accordion>
+
+## Movement Items
+
+Special items with movement abilities require both an item class and listener:
+
+### AOTE (Aspect of the End)
+
+Teleports player 8 blocks forward when right-clicking:
+
+```yaml
+# config.yml
+movementitems:
+  aote:
+    enabled: true
+    material: DIAMOND_SWORD
+    name: "&5Aspect of the End"
+    lore:
+      - "&7Right-click to teleport!"
+    distance: 8
+```
+
+### Enderbow
+
+Teleports player to arrow location:
+
+```yaml
+movementitems:
+  enderbow:
+    enabled: true
+    material: BOW
+    name: "&dEnderbow"
+    lore:
+      - "&7Shoot to teleport!"
+```
+
+### Grappling Hook
+
+Pulls player toward fishing hook location:
+
+```yaml
+movementitems:
+  grappling_hook:
+    enabled: true
+    material: FISHING_ROD
+    name: "&6Grappling Hook"
+    lore:
+      - "&7Hook and fly!"
+```
+
+### Enabling/Disabling Movement Items
+
+```java
+// From ItemsManager.java:88-101
+private void register(String itemName, CustomItem item, Listener listener) {
+    this.config = plugin.getConfig();
+    String enabledPath = "movementitems." + itemName + ".enabled";
+    boolean isEnabled = config.getBoolean(enabledPath);
+    
+    if(!isEnabled) {
+        debugMode.info("Item: " + itemName + " not registered.");
+        return;
+    }
+    
+    Bukkit.getPluginManager().registerEvents(listener, plugin);
+    items.put(itemName, item);
+    listeners.put(itemName, listener);
+    debugMode.info("Registered item: " + itemName);
+}
+```
+
+## Giving Items to Players
+
+Use the `/hubbly give` command or the `[ITEM]` action:
+
+### Command Usage
+
+```
+/hubbly give <player> <item> [amount] [slot]
+```
+
+Examples:
+```
+/hubbly give Steve compass
+/hubbly give Steve selector 1 0
+```
+
+### Via Actions
+
+```yaml
+actions:
+  - "[ITEM] compass"
+  - "[ITEM] selector;0"  # Give and place in slot 0
+```
+
+## Item Listeners
+
+Items can have event listeners attached for custom behavior:
+
+### ConfigItemListener
+
+Handles interactions with config-based items:
+
+```java
+@EventHandler
+public void onPlayerInteract(PlayerInteractEvent event) {
+    Player player = event.getPlayer();
+    ItemStack item = event.getItem();
+    
+    if(item == null || !item.hasItemMeta()) return;
+    
+    // Execute actions stored in item NBT
+    itemsManager.executeActions(player, item);
+}
+```
+
+## Reload Support
+
+The ItemsManager supports hot-reloading:
+
+```java
+// From ItemsManager.java:116-119
+public void reload() {
+    this.clear();
+    this.registerItems();
+}
+```
+
+### Cleanup Process
+
+```java
+// From ItemsManager.java:121-130
+public void clean() {
+    Collection<Listener> collection = this.listeners.values();
+    for(Listener listener : collection) {
+        HandlerList.unregisterAll(listener);
+    }
+}
+
+public void clear() {
+    items.clear();
+}
+```
+
+## Creating Custom Items Programmatically
+
+Create items at runtime using ItemBuilder:
+
+```java
+import me.calrl.hubbly.utils.ItemBuilder;
+import org.bukkit.Material;
+import org.bukkit.inventory.ItemStack;
+
+public ItemStack createCustomItem(Player player) {
+    return new ItemBuilder(Material.DIAMOND)
+        .setPlayer(player)
+        .setName("&b&lCustom Diamond")
+        .setLore(Arrays.asList(
+            "&7Line 1",
+            "&7Line 2"
+        ))
+        .addPersistentData(
+            PluginKeys.ACTIONS_KEY.getKey(),
+            PersistentDataType.STRING,
+            "[MESSAGE] &aYou clicked the diamond!"
+        )
+        .build();
+}
+```
+
+## Persistent Data Keys
+
+Hubbly uses NamespacedKeys for storing data:
+
+```java
+public enum PluginKeys {
+    ACTIONS_KEY("customActions"),
+    AOTE("aote"),
+    ENDERBOW("enderbow"),
+    GRAPPLING_HOOK("grappling_hook");
+    
+    private final NamespacedKey key;
+    
+    PluginKeys(String keyName) {
+        this.key = new NamespacedKey(Hubbly.getInstance(), keyName);
+    }
+    
+    public NamespacedKey getKey() {
+        return key;
+    }
+}
+```
+
+<Info>
+  Persistent data is stored in the item's NBT and persists across server restarts.
+</Info>
+
+## Item Validation
+
+Always validate items before use:
+
+```java
+public boolean isCustomItem(ItemStack item, String itemType) {
+    if(item == null || !item.hasItemMeta()) return false;
+    
+    ItemMeta meta = item.getItemMeta();
+    PersistentDataContainer container = meta.getPersistentDataContainer();
+    
+    NamespacedKey key = PluginKeys.valueOf(itemType.toUpperCase()).getKey();
+    return container.has(key, PersistentDataType.STRING);
+}
+```
+
+## Best Practices
+
+1. **Always check for null** when getting item meta
+2. **Use PersistentDataContainer** instead of lore for item identification
+3. **Validate input** in custom item configuration
+4. **Cache frequently used items** to reduce object creation
+5. **Use ItemBuilder** for consistent item creation
+6. **Test reload behavior** to ensure listeners re-register properly
+7. **Add permission checks** for powerful items
+
+## Performance Tips
+
+<Accordion title="Item Creation Optimization">
+- Create item templates once and clone them when needed
+- Use lazy initialization for player-specific data
+- Cache configuration sections during registration
+- Avoid creating items in high-frequency events
+</Accordion>
+
+## Complete Item Example
+
+```yaml
+# items.yml
+items:
+  hub_compass:
+    material: COMPASS
+    name: "&6&lHub Compass"
+    lore:
+      - "&7Navigate the hub with ease"
+      - ""
+      - "&e&lActions:"
+      - "&7▸ Right-click to open menu"
+      - "&7▸ Shift + Right-click for spawn"
+    custom_model_data: 1001
+    actions:
+      - "[MENU] selector"
+      - "[SOUND] UI_BUTTON_CLICK"
+      - "[MESSAGE] &aOpening server selector..."
+    enchantments:
+      - "DURABILITY:1"
+    flags:
+      - HIDE_ENCHANTS
+      - HIDE_ATTRIBUTES
+```
+
+Give this item:
+```
+/hubbly give @a hub_compass 1 4
+```
+
+Or via action:
+```yaml
+[ITEM] hub_compass;4
+```

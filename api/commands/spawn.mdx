@@ -1,0 +1,142 @@
+---
+title: "/spawn and /setspawn"
+description: "Commands for managing and teleporting to the spawn location"
+---
+
+## Overview
+
+The spawn commands allow administrators to set a spawn point and players to teleport to it. The teleportation includes a configurable timer and movement detection.
+
+---
+
+## /spawn
+
+Teleports the player to the configured spawn location.
+
+### Syntax
+
+```
+/spawn
+```
+
+### Permission
+
+<ParamField path="hubbly.command.spawn" type="permission">
+  Required to use the `/spawn` command.
+  
+  **Default:** true
+</ParamField>
+
+### Behavior
+
+1. Checks if the player has permission to use the command
+2. Triggers a `HubblySpawnEvent` (can be cancelled by other plugins)
+3. Starts a teleport timer (configured in `config.yml`)
+4. Monitors player movement during the timer
+5. Cancels teleport if the player moves
+6. Teleports the player when the timer completes
+
+### Examples
+
+```
+/spawn
+```
+
+### Configuration
+
+The spawn timer is controlled by the `spawn.timer` value in `config.yml`:
+
+```yaml
+spawn:
+  timer: 3  # Time in seconds before teleport
+  world: world
+  x: 0.0
+  y: 64.0
+  z: 0.0
+  yaw: 0.0
+  pitch: 0.0
+```
+
+<Note>
+If the player moves during the teleport countdown, the teleport will be cancelled and they'll receive a message: "You moved, teleport cancelled."
+</Note>
+
+### Events
+
+<ParamField path="HubblySpawnEvent" type="event">
+  Fired when a player uses `/spawn`. Can be cancelled by other plugins or event handlers.
+  
+  **Cancellable:** Yes
+</ParamField>
+
+---
+
+## /setspawn
+
+Sets the spawn location to the player's current position.
+
+### Syntax
+
+```
+/setspawn
+```
+
+### Permission
+
+<ParamField path="hubbly.command.setspawn" type="permission">
+  Required to use the `/setspawn` command.
+  
+  **Default:** op
+</ParamField>
+
+### Behavior
+
+1. Captures the player's current location (X, Y, Z coordinates)
+2. Rounds coordinates to the nearest 0.5 block for precision
+3. Rounds yaw and pitch to the nearest cardinal direction
+4. Saves the world name and all position data to `config.yml`
+5. Persists the configuration to disk
+
+### Examples
+
+```
+/setspawn
+```
+
+**Output:**
+```
+Success!
+```
+
+### Coordinate Rounding
+
+The command uses intelligent rounding:
+- **Position (X, Y, Z):** Rounded to nearest 0.5 (e.g., 10.7 becomes 10.5, 10.3 becomes 10.5)
+- **Rotation (Yaw, Pitch):** Rounded to nearest 45-degree angle for clean directional facing
+
+<Note>
+The spawn location is saved immediately to the configuration file and will persist across server restarts.
+</Note>
+
+<Warning>
+If you set spawn in a world that is later deleted or renamed, the `/spawn` command may fail or teleport players to unexpected locations.
+</Warning>
+
+---
+
+## Permissions Summary
+
+| Permission | Description | Default |
+|------------|-------------|----------|
+| `hubbly.command.spawn` | Use `/spawn` command | true |
+| `hubbly.command.setspawn` | Use `/setspawn` command | op |
+| `hubbly.command.*` | All command permissions | op |
+
+---
+
+## Source Reference
+
+Implemented in:
+- `SpawnCommand.java:53` - Spawn teleport handler
+- `SetSpawnCommand.java:54` - Spawn location setter
+- `SpawnTeleportTask.java` - Teleport timer and movement detection

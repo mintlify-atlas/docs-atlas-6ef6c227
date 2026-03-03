@@ -1,0 +1,550 @@
+---
+title: Effect Actions
+description: Actions for sounds, visuals, particles, and player movement effects
+---
+
+Effect actions create audio-visual feedback, apply potion effects, and manipulate player movement.
+
+## SOUND
+
+Play a sound effect at the player's location.
+
+<ParamField path="sound" type="string" required>
+  The Bukkit Sound enum name (e.g., `UI_BUTTON_CLICK`, `ENTITY_PLAYER_LEVELUP`)
+</ParamField>
+
+### Sound Names
+
+Use any valid Bukkit Sound enum value. Common sounds include:
+
+- `UI_BUTTON_CLICK` - Menu click
+- `ENTITY_PLAYER_LEVELUP` - Success/achievement
+- `ENTITY_ENDERMAN_TELEPORT` - Teleportation
+- `BLOCK_NOTE_BLOCK_PLING` - Notification
+- `ENTITY_VILLAGER_NO` - Error/denied
+
+[Full list of sounds →](https://hub.spigotmc.org/javadocs/spigot/org/bukkit/Sound.html)
+
+### Examples
+
+<CodeGroup>
+```yaml Button Click
+actions:
+  - "[SOUND] UI_BUTTON_CLICK"
+  - "[MENU] selector"
+```
+
+```yaml Success Sound
+actions:
+  - "[SOUND] ENTITY_PLAYER_LEVELUP"
+  - "[MESSAGE] &aPurchase complete!"
+```
+
+```yaml Teleport Sound
+actions:
+  - "[SOUND] ENTITY_ENDERMAN_TELEPORT"
+  - "[BUNGEE] survival"
+```
+</CodeGroup>
+
+### Sound Properties
+
+- Volume: Fixed at `1.0`
+- Pitch: Fixed at `1.0`
+- Location: Player's current position
+
+<Note>
+  If the sound name is invalid, the action will fail gracefully and log an error in the console.
+</Note>
+
+---
+
+## TITLE
+
+Display a title and subtitle to the player.
+
+<ParamField path="title" type="string" required>
+  The main title text. Supports color codes and PlaceholderAPI.
+</ParamField>
+
+<ParamField path="subtitle" type="string">
+  The subtitle text. Use empty string for no subtitle.
+</ParamField>
+
+<ParamField path="fadeIn" type="integer" required>
+  Fade in time in ticks (20 ticks = 1 second)
+</ParamField>
+
+<ParamField path="stay" type="integer" required>
+  Stay time in ticks
+</ParamField>
+
+<ParamField path="fadeOut" type="integer" required>
+  Fade out time in ticks
+</ParamField>
+
+### Syntax
+
+```
+[TITLE] title;subtitle;fadeIn;stay;fadeOut
+```
+
+All 5 parameters are required, separated by semicolons.
+
+### Examples
+
+<CodeGroup>
+```yaml Welcome Title
+actions:
+  - "[TITLE] &aWelcome!;&7Enjoy your stay;10;60;10"
+```
+
+```yaml No Subtitle
+actions:
+  - "[TITLE] &6&lPREMIUM ACTIVATED;;20;100;20"
+```
+
+```yaml Quick Flash
+actions:
+  - "[TITLE] &c&lGO!;;0;20;5"
+```
+
+```yaml Long Display
+actions:
+  - "[TITLE] &eEvent Starting;&7Get ready!;20;200;20"
+```
+</CodeGroup>
+
+### Timing Guide
+
+| Duration | Ticks | Use Case |
+|----------|-------|----------|
+| 0.5s | 10 | Quick flash |
+| 1s | 20 | Standard fade |
+| 3s | 60 | Short message |
+| 5s | 100 | Medium message |
+| 10s | 200 | Long announcement |
+
+### Color Support
+
+```yaml
+actions:
+  - "[TITLE] <#FFD700>Welcome!;<#FFA500>Have fun;10;60;10"
+```
+
+### With Placeholders
+
+```yaml
+actions:
+  - "[TITLE] &aWelcome %player_name%!;&7Level %player_level%;10;80;10"
+```
+
+### Error Handling
+
+If the parameters are invalid, default values are used:
+
+- Title: "Hubbly"
+- Subtitle: ""
+- FadeIn: 20 ticks
+- Stay: 200 ticks
+- FadeOut: 20 ticks
+
+<Warning>
+  Make sure to provide exactly 5 parameters separated by semicolons. Missing parameters will trigger fallback to defaults.
+</Warning>
+
+---
+
+## FIREWORK
+
+Spawn a firework at the player's location.
+
+<ParamField path="type" type="enum" required>
+  Firework effect type: `BALL`, `BALL_LARGE`, `BURST`, `CREEPER`, `STAR`
+</ParamField>
+
+<ParamField path="red" type="integer" required>
+  Red color component (0-255)
+</ParamField>
+
+<ParamField path="green" type="integer" required>
+  Green color component (0-255)
+</ParamField>
+
+<ParamField path="blue" type="integer" required>
+  Blue color component (0-255)
+</ParamField>
+
+<ParamField path="power" type="integer" required>
+  Launch power/height (0-3 recommended)
+</ParamField>
+
+<ParamField path="delay" type="integer">
+  Optional delay in ticks before spawning (default: 1)
+</ParamField>
+
+### Syntax
+
+```
+[FIREWORK] type;red;green;blue;power;delay
+```
+
+### Firework Types
+
+- `BALL` - Small ball explosion
+- `BALL_LARGE` - Large ball explosion
+- `BURST` - Burst pattern
+- `CREEPER` - Creeper face pattern
+- `STAR` - Star-shaped explosion
+
+### Examples
+
+<CodeGroup>
+```yaml Red Firework
+actions:
+  - "[FIREWORK] BALL_LARGE;255;0;0;2;1"
+```
+
+```yaml Gold Firework
+actions:
+  - "[FIREWORK] STAR;255;215;0;2;1"
+```
+
+```yaml Green Creeper
+actions:
+  - "[FIREWORK] CREEPER;0;255;0;1;1"
+```
+
+```yaml Purple Burst
+actions:
+  - "[FIREWORK] BURST;128;0;128;3;1"
+```
+
+```yaml Delayed Firework
+actions:
+  - "[FIREWORK] BALL;255;255;255;2;40"
+  # Spawns after 2 seconds (40 ticks)
+```
+</CodeGroup>
+
+### Color Examples
+
+| Color | RGB Values |
+|-------|------------|
+| Red | `255;0;0` |
+| Green | `0;255;0` |
+| Blue | `0;0;255` |
+| Yellow | `255;255;0` |
+| Purple | `128;0;128` |
+| Orange | `255;165;0` |
+| White | `255;255;255` |
+| Pink | `255;192;203` |
+
+### Common Patterns
+
+<Accordion title="Achievement celebration">
+  ```yaml
+  actions:
+    - "[SOUND] ENTITY_PLAYER_LEVELUP"
+    - "[TITLE] &6&lACHIEVEMENT!;&aYou did it!;10;60;10"
+    - "[FIREWORK] STAR;255;215;0;2;20"
+    - "[FIREWORK] BALL_LARGE;255;215;0;2;35"
+  ```
+</Accordion>
+
+<Accordion title="Rank up effect">
+  ```yaml
+  actions:
+    - "[FIREWORK] BALL_LARGE;138;43;226;2;1"
+    - "[FIREWORK] STAR;138;43;226;2;15"
+    - "[FIREWORK] BURST;138;43;226;2;30"
+    - "[BROADCAST] <#8A2BE2>%player_name% ranked up to VIP!"
+  ```
+</Accordion>
+
+<Note>
+  Fireworks always spawn with a trail effect for better visibility.
+</Note>
+
+---
+
+## EFFECT
+
+Apply a potion effect to the player.
+
+<ParamField path="effect" type="string" required>
+  The potion effect type (e.g., `SPEED`, `JUMP_BOOST`, `REGENERATION`)
+</ParamField>
+
+<ParamField path="duration" type="integer" required>
+  Effect duration in ticks (20 ticks = 1 second)
+</ParamField>
+
+<ParamField path="amplifier" type="integer" required>
+  Effect strength/amplifier (0 = level 1, 1 = level 2, etc.)
+</ParamField>
+
+### Syntax
+
+```
+[EFFECT] effect_name;duration;amplifier
+```
+
+### Common Effects
+
+| Effect | Description |
+|--------|-------------|
+| `SPEED` | Movement speed increase |
+| `SLOW` | Movement speed decrease |
+| `JUMP_BOOST` | Jump height increase |
+| `REGENERATION` | Health regeneration |
+| `NIGHT_VISION` | See in darkness |
+| `INVISIBILITY` | Become invisible |
+| `GLOWING` | Glowing outline |
+| `LEVITATION` | Float upwards |
+
+[Full effect list →](https://hub.spigotmc.org/javadocs/spigot/org/bukkit/potion/PotionEffectType.html)
+
+### Examples
+
+<CodeGroup>
+```yaml Speed Boost
+actions:
+  - "[EFFECT] SPEED;1200;1"
+  # Speed II for 60 seconds
+```
+
+```yaml Jump Boost
+actions:
+  - "[EFFECT] JUMP_BOOST;600;2"
+  # Jump Boost III for 30 seconds
+```
+
+```yaml Night Vision
+actions:
+  - "[EFFECT] NIGHT_VISION;6000;0"
+  # Night Vision I for 5 minutes
+```
+
+```yaml Multiple Effects
+actions:
+  - "[EFFECT] SPEED;1200;1"
+  - "[EFFECT] JUMP_BOOST;1200;1"
+  - "[MESSAGE] &aMovement boost activated!"
+```
+</CodeGroup>
+
+### Duration Reference
+
+| Time | Ticks |
+|------|-------|
+| 5s | 100 |
+| 10s | 200 |
+| 30s | 600 |
+| 1m | 1200 |
+| 5m | 6000 |
+| 10m | 12000 |
+| Infinite | 999999 |
+
+### Amplifier Levels
+
+- `0` = Level I
+- `1` = Level II
+- `2` = Level III
+- `3` = Level IV
+- etc.
+
+<Note>
+  Effects use the XPotion library for cross-version compatibility.
+</Note>
+
+---
+
+## LAUNCH
+
+Launch the player in their facing direction.
+
+<ParamField path="power" type="double" required>
+  Horizontal launch power multiplier
+</ParamField>
+
+<ParamField path="powerY" type="double" required>
+  Vertical launch power (Y velocity)
+</ParamField>
+
+### Syntax
+
+```
+[LAUNCH] power;powerY
+```
+
+If no parameters provided, uses values from `config.yml`:
+- `launchpad.power` (default horizontal)
+- `launchpad.power_y` (default vertical)
+
+### Examples
+
+<CodeGroup>
+```yaml Default Launch
+actions:
+  - "[LAUNCH]"
+  # Uses config.yml values
+```
+
+```yaml Custom Launch
+actions:
+  - "[LAUNCH] 2.0;1.5"
+  # 2x horizontal, 1.5 vertical
+```
+
+```yaml High Jump
+actions:
+  - "[LAUNCH] 0.5;3.0"
+  # Minimal horizontal, high vertical
+```
+
+```yaml Forward Boost
+actions:
+  - "[LAUNCH] 3.0;0.5"
+  # Strong horizontal, low vertical
+```
+</CodeGroup>
+
+### Power Guidelines
+
+| Power | Effect |
+|-------|--------|
+| 0.5-1.0 | Gentle boost |
+| 1.0-2.0 | Medium launch |
+| 2.0-3.0 | Strong launch |
+| 3.0+ | Extreme launch |
+
+### Vertical Power (Y)
+
+| Power Y | Effect |
+|---------|--------|
+| 0.5-1.0 | Small hop |
+| 1.0-2.0 | Normal jump |
+| 2.0-3.0 | High jump |
+| 3.0+ | Very high jump |
+
+### Direction Handling
+
+The launch direction is based on:
+
+1. Player's current facing direction (yaw)
+2. Direction vector is calculated
+3. Y component is replaced with `powerY`
+4. Vector is multiplied by `power`
+5. Applied to player velocity
+
+### Common Use Cases
+
+<Accordion title="Launch pad block">
+  ```yaml
+  # In a block interaction event
+  actions:
+    - "[SOUND] ENTITY_BAT_TAKEOFF"
+    - "[EFFECT] SLOW_FALLING;100;0"
+    - "[LAUNCH] 2.5;2.0"
+  ```
+</Accordion>
+
+<Accordion title="Jump boost item">
+  ```yaml
+  # Right-click item
+  jump_boost:
+    name: "&aSuper Jump"
+    material: FEATHER
+    actions:
+      - "[LAUNCH] 1.0;3.5"
+      - "[EFFECT] SLOW_FALLING;60;0"
+      - "[SOUND] ENTITY_ENDER_DRAGON_FLAP"
+  ```
+</Accordion>
+
+<Accordion title="Knockback item">
+  ```yaml
+  knockback_stick:
+    name: "&cKnockback Stick"
+    material: STICK
+    actions:
+      - "[LAUNCH] 4.0;1.0"
+      - "[SOUND] ENTITY_PLAYER_ATTACK_KNOCKBACK"
+  ```
+</Accordion>
+
+<Warning>
+  Very high launch powers can cause fall damage. Consider adding SLOW_FALLING effect for player safety.
+</Warning>
+
+---
+
+## Complete Effect Combos
+
+<Accordion title="VIP join celebration">
+  ```yaml
+  actions:
+    - "[SOUND] UI_TOAST_CHALLENGE_COMPLETE"
+    - "[TITLE] &6&lWELCOME VIP!;&aEnjoy your perks;10;70;20"
+    - "[FIREWORK] STAR;255;215;0;2;10"
+    - "[FIREWORK] BALL_LARGE;255;215;0;2;25"
+    - "[EFFECT] SPEED;6000;1"
+    - "[EFFECT] JUMP_BOOST;6000;0"
+    - "[BROADCAST] <#FFD700>VIP %player_name% joined the server!"
+  ```
+</Accordion>
+
+<Accordion title="Parkour checkpoint">
+  ```yaml
+  checkpoint_reached:
+    material: GOLD_BLOCK
+    name: "&6Checkpoint"
+    actions:
+      - "[SOUND] BLOCK_NOTE_BLOCK_PLING"
+      - "[TITLE] &aCheckpoint!;&7Progress saved;5;30;5"
+      - "[EFFECT] REGENERATION;100;2"
+      - "[FIREWORK] BALL;0;255;0;1;1"
+      - "[MESSAGE] &7Checkpoint saved!"
+  ```
+</Accordion>
+
+<Accordion title="Speed run power-up">
+  ```yaml
+  speed_powerup:
+    material: SUGAR
+    name: "&b&lSPEED BOOST"
+    actions:
+      - "[EFFECT] SPEED;600;2"
+      - "[EFFECT] JUMP_BOOST;600;1"
+      - "[LAUNCH] 1.5;0.8"
+      - "[SOUND] ENTITY_PLAYER_LEVELUP"
+      - "[TITLE] &b&lSPEED BOOST!;&730 seconds;5;40;5"
+  ```
+</Accordion>
+
+<Accordion title="Teleport effect sequence">
+  ```yaml
+  teleport_item:
+    material: ENDER_PEARL
+    name: "&5Teleporter"
+    actions:
+      - "[SOUND] ENTITY_ENDERMAN_TELEPORT"
+      - "[EFFECT] BLINDNESS;40;0"
+      - "[TITLE] &5Teleporting...;;10;20;10"
+      - "[FIREWORK] BALL;128;0;128;1;1"
+      - "[PLAYER] spawn"
+  ```
+</Accordion>
+
+<Accordion title="Launch pad with safety">
+  ```yaml
+  # Pressure plate or block interaction
+  actions:
+    - "[SOUND] ENTITY_BAT_TAKEOFF"
+    - "[EFFECT] SLOW_FALLING;200;0"
+    - "[LAUNCH] 3.0;2.5"
+    - "[FIREWORK] BURST;255;255;255;1;15"
+    - "[MESSAGE] &7Wheeee!"
+  ```
+</Accordion>

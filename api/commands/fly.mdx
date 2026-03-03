@@ -1,0 +1,122 @@
+---
+title: "/fly"
+description: "Toggle flight mode for players in survival and adventure modes"
+---
+
+## Overview
+
+The `/fly` command allows players to toggle flight mode on and off. Flight state persists across sessions using player persistent data.
+
+## Syntax
+
+```
+/fly
+```
+
+## Permission
+
+<ParamField path="hubbly.command.fly" type="permission">
+  Required to use the `/fly` command.
+  
+  **Default:** op
+</ParamField>
+
+## Behavior
+
+The command toggles flight mode with the following logic:
+
+1. Checks if flight is enabled in the plugin configuration
+2. Verifies the player has permission or is an operator
+3. Ignores spectator mode players (they can always fly)
+4. Reads the player's current flight state from persistent data
+5. Toggles the flight state and saves it to persistent data
+6. Sends a confirmation message to the player
+
+### Flight States
+
+- **Enabled (1):** Player can fly by double-jumping (similar to creative mode)
+- **Disabled (0):** Player cannot fly and will fall if currently flying
+
+<Note>
+Flight state is stored in the player's persistent data container using the key `hubbly.canFly`, meaning it persists across server restarts and world changes.
+</Note>
+
+## Examples
+
+**Enabling flight:**
+```
+/fly
+```
+Output: `Flight mode enabled.`
+
+**Disabling flight:**
+```
+/fly
+```
+Output: `Flight mode disabled.`
+
+## Configuration
+
+Flight must be enabled in the plugin's `config.yml`:
+
+```yaml
+player:
+  fly:
+    enabled: true
+```
+
+If `player.fly.enabled` is set to `false`, the command will be disabled and players will receive:
+```
+Flight is disabled in config
+```
+
+## Technical Details
+
+### Persistent Data Storage
+
+The command uses Bukkit's `PersistentDataContainer` API to store flight state:
+
+- **Key:** `NamespacedKey(plugin, "fly")`
+- **Type:** `PersistentDataType.BYTE`
+- **Values:**
+  - `0` = Flight disabled
+  - `1` = Flight enabled
+
+### Game Mode Restrictions
+
+<ParamField path="Spectator Mode" type="restriction">
+  Players in spectator mode are ignored by this command as they have flight by default.
+</ParamField>
+
+<ParamField path="Creative Mode" type="restriction">
+  Players in creative mode already have flight. This command will update their persistent data but won't affect their ability to fly.
+</ParamField>
+
+## Messages
+
+All messages are defined in `languages/en.yml` and support localization:
+
+| Message Key | Default Text | When Shown |
+|-------------|--------------|------------|
+| `fly.enable` | "Flight mode enabled." | When flight is turned on |
+| `fly.disable` | "Flight mode disabled." | When flight is turned off |
+| `no_fly_enabled` | "Flight is disabled in config" | When flight is disabled in config |
+| `no_permission_command` | "You do not have permission to use this command!" | When player lacks permission |
+| `no_console` | "Only players can use this command!" | When used from console |
+
+## Permissions Summary
+
+| Permission | Description | Default |
+|------------|-------------|----------|
+| `hubbly.command.fly` | Use the `/fly` command | op |
+| `hubbly.command.*` | All command permissions | op |
+
+<Warning>
+Disabling flight while a player is mid-air will cause them to fall. Ensure players are on the ground or provide alternative safety measures.
+</Warning>
+
+## Source Reference
+
+Implemented in:
+- `FlyCommand.java:47` - Flight toggle handler
+- Flight state is managed via Bukkit's PersistentDataContainer API

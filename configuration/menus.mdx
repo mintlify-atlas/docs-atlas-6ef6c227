@@ -1,0 +1,494 @@
+---
+title: "Menu Configuration"
+description: "Create custom interactive menus for your Hubbly hub server"
+---
+
+Menus are custom inventory GUIs that players can interact with. They're defined in YAML files in the `menus/` folder.
+
+## Menu Structure
+
+Each menu file contains:
+
+<ParamField path="title" type="string" required>
+  The displayed title of the inventory. Supports color codes and hex colors.
+</ParamField>
+
+<ParamField path="size" type="integer" required>
+  The number of slots in the inventory. Must be a multiple of 9 (9, 18, 27, 36, 45, 54).
+</ParamField>
+
+<ParamField path="items" type="object" required>
+  A map of items to display in the menu.
+</ParamField>
+
+## Item Properties
+
+Each item in the menu can have:
+
+<ParamField path="material" type="material" required>
+  The Minecraft material for the item.
+</ParamField>
+
+<ParamField path="name" type="string">
+  Display name of the item. Supports color codes and hex colors.
+</ParamField>
+
+<ParamField path="slot" type="integer" required>
+  The slot position (0-based index). Use `-1` for fill items.
+</ParamField>
+
+<ParamField path="lore" type="array">
+  List of lore lines.
+  
+  ```yaml
+  lore:
+    - "&7Line 1"
+    - "&7Line 2"
+  ```
+</ParamField>
+
+<ParamField path="amount" type="integer" default="1">
+  Stack size of the item (1-64).
+</ParamField>
+
+<ParamField path="actions" type="array">
+  Actions to execute when the item is clicked.
+</ParamField>
+
+## Player Heads in Menus
+
+Menus support three types of player heads:
+
+<Tabs>
+  <Tab title="URL Texture">
+    Use a texture URL from minecraft.net:
+    
+    ```yaml
+    creative:
+      material: PLAYER_HEAD
+      url: http://textures.minecraft.net/texture/bcf2105bb737638833033dd8244071e75870e2e11c2617e542e8924fb2b90180
+      name: "&cCreative Server"
+      slot: 14
+    ```
+  </Tab>
+  
+  <Tab title="Player Name">
+    Use a specific player's skin:
+    
+    ```yaml
+    player_head:
+      material: PLAYER_HEAD
+      texture: player
+      name: "Player Head"
+      slot: 0
+    ```
+  </Tab>
+  
+  <Tab title="HeadDatabase">
+    Use HeadDatabase plugin IDs (requires HeadDatabase):
+    
+    ```yaml
+    hdb_head:
+      material: PLAYER_HEAD
+      hdb: 12345
+      name: "HDB Head"
+      slot: 0
+    ```
+  </Tab>
+</Tabs>
+
+## Leather Armor Colors
+
+Customize leather armor colors using hex codes:
+
+```yaml
+factions:
+  material: LEATHER_CHESTPLATE
+  color: 8ad592  # Without the # symbol
+  name: "&cFactions Server"
+  slot: 22
+```
+
+<Note>
+  Omit the `#` symbol when specifying hex colors for leather armor.
+</Note>
+
+## Custom Model Data
+
+For resource pack support, you can specify custom model data:
+
+```yaml
+survival:
+  material: APPLE
+  model_data: 10001
+  name: "<#CCFFDD>Survival Server"
+  slot: 12
+```
+
+## Menu Actions
+
+<Tabs>
+  <Tab title="BungeeCord">
+    Connect player to another server (requires BungeeCord):
+    
+    ```yaml
+    actions:
+      - "[BUNGEE] survival"
+    ```
+  </Tab>
+  
+  <Tab title="Close Menu">
+    Close the current menu:
+    
+    ```yaml
+    actions:
+      - "[CLOSE]"
+    ```
+  </Tab>
+  
+  <Tab title="Player Command">
+    Execute command as player:
+    
+    ```yaml
+    actions:
+      - "[PLAYER] hubbly movement none"
+      - "[CLOSE]"
+    ```
+  </Tab>
+  
+  <Tab title="Link/URL">
+    Open a clickable link in chat:
+    
+    ```yaml
+    actions:
+      - "[LINK] Click me for discord;Discord link;discord.com/invite"
+    ```
+    
+    Format: `[LINK] <hover_text>;<link_text>;<url>`
+  </Tab>
+  
+  <Tab title="Menu">
+    Open another menu:
+    
+    ```yaml
+    actions:
+      - "[MENU] selector"
+    ```
+  </Tab>
+</Tabs>
+
+## Fill Items
+
+Fill empty slots with a specific item using `slot: -1`:
+
+```yaml
+fill:
+  slot: -1
+  material: BLACK_STAINED_GLASS_PANE
+  name: " "  # Empty name
+  actions:
+    - "[CLOSE]"
+```
+
+## Default Menus
+
+### Server Selector
+
+<Accordion title="selector.yml">
+```yaml
+title: "&cServer Selector"
+size: 36
+items:
+  survival:
+    material: APPLE
+    name: "<#CCFFDD>Survival Server"
+    amount: 3
+    url: http://textures.minecraft.net/texture/355e2dc46399b7b9275221fcdc87c66e58d0d3044dcf62af0465122c1cd7e0bc
+    model_data: 10001
+    slot: 12
+    lore:
+      - "&aJoin the Survival Server!"
+    actions:
+      - "[BUNGEE] survival"
+  
+  creative:
+    material: PLAYER_HEAD
+    texture: http://textures.minecraft.net/texture/bcf2105bb737638833033dd8244071e75870e2e11c2617e542e8924fb2b90180
+    name: "&cCreative Server"
+    slot: 14
+    lore:
+      - "&aJoin the Creative Server!"
+    actions:
+      - "[BUNGEE] creative"
+  
+  factions:
+    material: LEATHER_CHESTPLATE
+    color: 8ad592
+    name: "&cFactions Server"
+    slot: 22
+    lore:
+      - "&aJoin the Factions Server!"
+    actions:
+      - "[BUNGEE] factions"
+  
+  fill:
+    slot: -1
+    material: BLACK_STAINED_GLASS_PANE
+    name: " "
+    actions:
+      - "[CLOSE]"
+```
+</Accordion>
+
+### Socials Menu
+
+<Accordion title="socials.yml">
+```yaml
+title: "&6Socials"
+size: 9
+items:
+  discord:
+    material: PLAYER_HEAD
+    name: "&3Discord Server"
+    url: http://textures.minecraft.net/texture/7873c12bffb5251a0b88d5ae75c7247cb39a75ff1a81cbe4c8a39b311ddeda
+    slot: 3
+    lore:
+      - "&aJoin the Discord Server!"
+    actions:
+      - "[LINK] Click me for the discord;Discord link;discord.com/invite"
+  
+  tiktok:
+    material: PLAYER_HEAD
+    url: http://textures.minecraft.net/texture/2786dc9d65c3b7983e8bb6af588fac92f33720c723e0d29f8b74151344a648a1
+    name: "&cTiktok"
+    slot: 5
+    lore:
+      - "&aFollow me on TikTok!"
+    actions:
+      - "[LINK] Click me to open TikTok!;TikTok link;tiktok.com"
+  
+  fill:
+    slot: -1
+    material: BLACK_STAINED_GLASS_PANE
+    name: " "
+    actions:
+      - "[CLOSE]"
+```
+</Accordion>
+
+### Movement Menu
+
+<Accordion title="movement.yml">
+```yaml
+title: "&6Movement"
+size: 45
+items:
+  none:
+    material: BARRIER
+    name: "&cNone"
+    slot: 19
+    lore:
+      - "&aSet to walk"
+    actions:
+      - "[PLAYER] hubbly movement none"
+      - "[CLOSE]"
+  
+  djump:
+    material: GOLD_BOOTS
+    name: "&cDouble Jump"
+    slot: 22
+    lore:
+      - "&aSet to doublejump"
+    actions:
+      - "[PLAYER] hubbly movement doublejump"
+      - "[CLOSE]"
+  
+  fly:
+    material: FEATHER
+    name: "&rFlight"
+    slot: 25
+    lore:
+      - "&aSet to fly"
+    actions:
+      - "[PLAYER] hubbly movement fly"
+      - "[CLOSE]"
+  
+  fill:
+    slot: -1
+    material: BLACK_STAINED_GLASS_PANE
+    name: " "
+```
+</Accordion>
+
+## Opening Menus
+
+### Via Command
+
+```bash
+/hubbly menu <menu_name>
+```
+
+Example:
+```bash
+/hubbly menu selector
+/hubbly menu socials
+```
+
+### Via Item Action
+
+In `items.yml`:
+```yaml
+compass:
+  name: "&cCompass"
+  material: COMPASS
+  actions:
+    - "[MENU] selector"
+```
+
+### Via Menu Action
+
+Chain menus together:
+```yaml
+back_button:
+  material: ARROW
+  name: "&cBack"
+  slot: 0
+  actions:
+    - "[MENU] main"
+```
+
+## Creating Custom Menus
+
+### Example: Minigame Selector
+
+<Accordion title="minigames.yml">
+```yaml
+title: "<#FF6B6B>Minigame Selector"
+size: 27
+items:
+  bedwars:
+    material: RED_BED
+    name: "<#FF0000>BedWars"
+    slot: 11
+    lore:
+      - "&7Protect your bed and destroy"
+      - "&7the enemy beds!"
+      - ""
+      - "&aClick to join!"
+    actions:
+      - "[BUNGEE] bedwars"
+  
+  skywars:
+    material: DIAMOND_SWORD
+    name: "<#00FFFF>SkyWars"
+    slot: 13
+    lore:
+      - "&7Battle it out on sky islands!"
+      - ""
+      - "&aClick to join!"
+    actions:
+      - "[BUNGEE] skywars"
+  
+  parkour:
+    material: LEATHER_BOOTS
+    name: "<#FFD700>Parkour"
+    slot: 15
+    lore:
+      - "&7Test your jumping skills!"
+      - ""
+      - "&aClick to join!"
+    actions:
+      - "[PLAYER] parkour"
+      - "[CLOSE]"
+  
+  fill:
+    slot: -1
+    material: GRAY_STAINED_GLASS_PANE
+    name: " "
+    actions:
+      - "[CLOSE]"
+```
+</Accordion>
+
+### Example: Settings Menu
+
+<Accordion title="settings.yml">
+```yaml
+title: "&6Settings"
+size: 27
+items:
+  player_visibility:
+    material: LIME_DYE
+    name: "&aPlayer Visibility"
+    slot: 11
+    lore:
+      - "&7Toggle player visibility"
+      - ""
+      - "&eClick to toggle"
+    actions:
+      - "[PLAYER] hubbly togglevisibility"
+      - "[CLOSE]"
+  
+  flight:
+    material: FEATHER
+    name: "&bFlight Mode"
+    slot: 13
+    lore:
+      - "&7Toggle flight"
+      - ""
+      - "&eClick to toggle"
+    actions:
+      - "[PLAYER] fly"
+      - "[CLOSE]"
+  
+  movement:
+    material: GOLD_BOOTS
+    name: "&6Movement Type"
+    slot: 15
+    lore:
+      - "&7Change movement type"
+      - ""
+      - "&eClick to open"
+    actions:
+      - "[MENU] movement"
+  
+  fill:
+    slot: -1
+    material: BLACK_STAINED_GLASS_PANE
+    name: " "
+```
+</Accordion>
+
+## Tips and Best Practices
+
+<Warning>
+  - Menu files must be placed in the `menus/` folder
+  - File names should use lowercase and no spaces (use underscores)
+  - Size must be a multiple of 9 (max 54)
+  - Slots are 0-based (0 = first slot, 8 = last slot in first row)
+</Warning>
+
+<Note>
+  **Slot Layout Reference:**
+  
+  9-slot menu: 0-8
+  
+  18-slot menu: 0-17
+  
+  27-slot menu: 0-26 (3 rows)
+  
+  36-slot menu: 0-35 (4 rows)
+  
+  45-slot menu: 0-44 (5 rows)
+  
+  54-slot menu: 0-53 (6 rows - max)
+</Note>
+
+<Accordion title="Design Tips">
+  - Use fill items to prevent clicking empty slots
+  - Space out important items for better visual clarity
+  - Use consistent naming conventions across menus
+  - Add descriptive lore to explain what each option does
+  - Test menus with `/hubbly menu <name>` before deployment
+  - Use color gradients for professional-looking titles
+</Accordion>

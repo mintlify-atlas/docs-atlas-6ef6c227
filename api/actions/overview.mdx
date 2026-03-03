@@ -1,0 +1,131 @@
+---
+title: Actions Overview
+description: Complete reference for all action types in Hubbly
+---
+
+Actions are commands that execute when players interact with items or menus. They use a bracket syntax format and can be chained together to create complex behaviors.
+
+## Action Syntax
+
+All actions follow this format:
+
+```yaml
+actions:
+  - "[ACTION_TYPE] parameters"
+  - "[ANOTHER_ACTION] more parameters"
+```
+
+## Available Action Types
+
+Actions are organized into three main categories:
+
+### Player Actions
+
+Actions that affect the player or execute commands:
+
+- **PLAYER** - Execute command as player
+- **CONSOLE** - Execute command from console
+- **GAMEMODE** - Change player's gamemode
+- **MESSAGE** - Send message to player
+- **BROADCAST** - Broadcast message to all players
+- **CLEAR** - Clear player's inventory
+- **ITEM** - Give custom item to player
+
+[Learn more about Player Actions →](/api/actions/player)
+
+### Menu & UI Actions
+
+Actions for menu interaction and interface control:
+
+- **MENU** - Open a menu
+- **CLOSE** - Close current menu
+- **SLOT** - Change player's held item slot
+- **LINK** - Send clickable link in chat
+- **BUNGEE** - Connect to BungeeCord server
+
+[Learn more about Menu Actions →](/api/actions/menu)
+
+### Effect Actions
+
+Actions that create visual or gameplay effects:
+
+- **SOUND** - Play sound effect
+- **TITLE** - Display title/subtitle
+- **FIREWORK** - Spawn firework
+- **EFFECT** - Apply potion effect
+- **LAUNCH** - Launch player in direction
+
+[Learn more about Effect Actions →](/api/actions/effects)
+
+## Chaining Actions
+
+You can chain multiple actions together. They execute in the order they're defined:
+
+```yaml
+actions:
+  - "[SOUND] ENTITY_PLAYER_LEVELUP"
+  - "[TITLE] &aWelcome!;&7Enjoy your stay;10;60;10"
+  - "[MENU] selector"
+```
+
+## Placeholders
+
+Many actions support PlaceholderAPI placeholders:
+
+```yaml
+actions:
+  - "[MESSAGE] Welcome %player_name%!"
+  - "[CONSOLE] give %player_name% diamond 1"
+```
+
+<Note>
+  The `%player_name%` placeholder is automatically available in CONSOLE actions.
+</Note>
+
+## Common Patterns
+
+<Accordion title="Opening a menu with sound feedback">
+  ```yaml
+  actions:
+    - "[SOUND] UI_BUTTON_CLICK"
+    - "[MENU] selector"
+  ```
+</Accordion>
+
+<Accordion title="Executing command and closing menu">
+  ```yaml
+  actions:
+    - "[PLAYER] hubbly movement fly"
+    - "[CLOSE]"
+  ```
+</Accordion>
+
+<Accordion title="BungeeCord transfer with effects">
+  ```yaml
+  actions:
+    - "[SOUND] ENTITY_ENDERMAN_TELEPORT"
+    - "[TITLE] &aTeleporting...;;10;40;10"
+    - "[BUNGEE] survival"
+  ```
+</Accordion>
+
+## Best Practices
+
+1. **Order matters** - Actions execute sequentially, so place time-sensitive actions (like CLOSE or BUNGEE) last
+2. **Provide feedback** - Use sounds or messages to confirm actions to players
+3. **Test thoroughly** - Some actions may behave differently in different contexts
+4. **Use permissions** - Combine actions with menu permissions for access control
+
+## Next Steps
+
+<CardGroup cols={3}>
+  <Card title="Player Actions" icon="user" href="/api/actions/player">
+    Commands, messages, and player state
+  </Card>
+  <Card title="Menu Actions" icon="window" href="/api/actions/menu">
+    Navigation and UI control
+  </Card>
+  <Card title="Effect Actions" icon="sparkles" href="/api/actions/effects">
+    Sounds, visuals, and effects
+  </Card>
+</CardGroup>

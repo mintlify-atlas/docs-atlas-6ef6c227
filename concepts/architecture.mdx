@@ -1,0 +1,292 @@
+---
+title: System Architecture
+description: Understanding Hubbly's plugin architecture, lifecycle, and extension points
+---
+
+## Overview
+
+Hubbly is a comprehensive Minecraft hub plugin built on the Spigot/Paper API. It follows a modular architecture with distinct managers for different responsibilities, enabling easy extension and customization.
+
+## Plugin Lifecycle
+
+The plugin follows the standard Bukkit/Spigot lifecycle with additional initialization phases:
+
+### Startup Sequence
+
+```java
+// From Hubbly.java:166-230
+public void onEnable() {
+    // 1. Load configuration files
+    this.saveDefaultConfig();
+    loadFiles();
+    
+    // 2. Initialize core managers
+    actionManager = new ActionManager(this);
+    itemsManager = new ItemsManager(this);
+    fileManager = new FileManager(this);
+    
+    // 3. Register event listeners
+    loadComponents();
+    
+    // 4. Register commands
+    // 5. Enable integrations (BungeeCord, metrics)
+}
+```
+
+<Accordion title="Initialization Details">
+  1. **Configuration Loading** - Saves default config and loads custom YAML files
+  2. **Manager Instantiation** - Creates all manager instances in dependency order
+  3. **Component Registration** - Registers listeners, commands, and channels
+  4. **Integration Setup** - Enables BungeeCord messaging, metrics, and hooks
+</Accordion>
+
+### Shutdown Sequence
+
+```java
+// From Hubbly.java:233-251
+public void onDisable() {
+    cleanup();                    // Unregister all listeners
+    storageManager.shutdown();    // Close database connections
+    bossBarManager.removeAllBossBars();
+    Bukkit.getScheduler().cancelTasks(this);
+}
+```
+
+## Core Architecture
+
+### Manager Pattern
+
+Hubbly uses a **manager-based architecture** where each feature is encapsulated in a dedicated manager class:
+
+<CardGroup cols={2}>
+  <Card title="ActionManager" icon="bolt">
+    Handles action registration and execution
+  </Card>
+  <Card title="ItemsManager" icon="cube">
+    Manages custom items and their behaviors
+  </Card>
+  <Card title="FileManager" icon="file">
+    Handles configuration file loading
+  </Card>
+  <Card title="PlayerManager" icon="user">
+    Tracks player data and states
+  </Card>
+</CardGroup>
+
+### Manager Access Pattern
+
+```java
+// All managers are accessible through the main plugin instance
+Hubbly plugin = Hubbly.getInstance();
+ActionManager actionManager = plugin.getActionManager();
+ItemsManager itemsManager = plugin.getItemsManager();
+```
+
+## Event-Driven Architecture
+
+Hubbly leverages Bukkit's event system with custom events:
+
+<Info>
+  The plugin fires custom events like `ActionEvent` before executing actions, allowing other plugins to intercept and modify behavior.
+</Info>
+
+```java
+// From ActionManager.java:78-89
+ActionEvent event = new ActionEvent(player, action, data);
+Bukkit.getPluginManager().callEvent(event);
+
+if(event.isCancelled()) {
+    return;
+}
+
+action.execute(plugin, player, data);
+```
+
+### Event Flow
+
+1. Player triggers an action (clicks item, steps on pressure plate, etc.)
+2. `ActionEvent` is fired with action details
+3. Other plugins can listen and cancel the event
+4. If not cancelled, action executes through ActionManager
+5. Result enum is returned indicating success/failure
+
+## Configuration System
+
+The plugin uses a multi-file YAML configuration structure:
+
+```
+plugins/Hubbly/
+├── config.yml           # Main configuration
+├── items.yml            # Custom item definitions
+├── menus/
+│   ├── selector.yml     # Server selector menu
+│   └── socials.yml      # Social links menu
+└── languages/
+    └── en.yml           # Localization strings
+```
+
+<Accordion title="Configuration Loading">
+```java
+// From Hubbly.java:262-276
+private void loadFiles() {
+    File itemsFile = new File(getDataFolder(), "items.yml");
+    if(!itemsFile.exists()) {
+        saveResource("items.yml", false);
+    }
+    itemsConfig = YamlConfiguration.loadConfiguration(itemsFile);
+    
+    saveResourceIfNotExists("menus/selector.yml");
+    saveResourceIfNotExists("menus/socials.yml");
+    saveResourceIfNotExists("languages/en.yml");
+}
+```
+</Accordion>
+
+## Extension Points
+
+Hubbly provides several extension points for developers:
+
+### 1. Custom Actions
+
+Implement the `Action` interface to create custom action types:
+
+```java
+public class MyCustomAction implements Action {
+    @Override
+    public String getIdentifier() {
+        return "CUSTOM";
+    }
+    
+    @Override
+    public void execute(Hubbly plugin, Player player, String data) {
+        // Your custom logic here
+    }
+}
+```
+
+### 2. Custom Items
+
+Implement the `CustomItem` interface:
+
+```java
+public class MyCustomItem implements CustomItem {
+    @Override
+    public ItemStack createItem() {
+        return new ItemBuilder(Material.DIAMOND)
+            .setName("&bCustom Item")
+            .build();
+    }
+    
+    @Override
+    public void setPlayer(Player player) {
+        this.player = player;
+    }
+}
+```
+
+### 3. Event Listeners
+
+Register custom event listeners:
+
+```java
+// From Hubbly.java:130-141
+private void registerListener(Listener listener, String enabledPath) {
+    if(config.getBoolean(enabledPath) || enabledPath.equals("null")) {
+        getServer().getPluginManager().registerEvents(listener, this);
+    }
+}
+```
+
+### 4. Hook System
+
+<Note>
+  Hubbly includes a `HookManager` for integrating with other plugins like PlaceholderAPI, Vault, etc.
+</Note>
+
+## Reload System
+
+The plugin supports hot-reloading without a server restart:
+
+```java
+// From Hubbly.java:90-111
+public void reloadPlugin() {
+    this.reloadConfig();
+    this.saveConfig();
+    
+    // Reload individual managers
+    disabledWorlds.reload();
+    subCommandManager.reload();
+    fileManager.reloadFiles();
+    itemsManager.reload();
+    localeManager.reload();
+    
+    // Clean and reload components
+    cleanup();
+    loadComponents();
+    loadFiles();
+}
+```
+
+### Reload-Safe Design
+
+1. **Unregister all listeners** before re-registering
+2. **Cancel scheduled tasks** to prevent duplicates
+3. **Clear manager caches** before repopulating
+4. **Reload configurations** from disk
+
+## Disabled Worlds System
+
+<Info>
+  Actions can be disabled in specific worlds using the `DisabledWorlds` manager.
+</Info>
+
+```java
+// From ActionManager.java:68-71
+DisabledWorlds disabledWorldsManager = plugin.getDisabledWorldsManager();
+boolean inDisabledWorld = disabledWorldsManager.inDisabledWorld(player.getLocation());
+
+if(inDisabledWorld) return;
+```
+
+## BungeeCord Integration
+
+Hubbly registers messaging channels for cross-server communication:
+
+```java
+// From Hubbly.java:225
+this.getServer().getMessenger().registerOutgoingPluginChannel(this, "BungeeCord");
+```
+
+This enables the `BUNGEE` action for server transfers.
+
+## Best Practices
+
+1. **Always check for null** when accessing managers or configurations
+2. **Use the Result enum** to handle action execution outcomes
+3. **Fire custom events** before making significant changes
+4. **Implement reload support** in custom managers
+5. **Register cleanup handlers** in `onDisable()`
+
+## Architecture Diagram
+
+```
+┌─────────────────────────────────────┐
+│         Hubbly Main Plugin          │
+├─────────────────────────────────────┤
+│  • Plugin Lifecycle Management      │
+│  • Manager Initialization           │
+│  • Event Registration              │
+└──────────────┬──────────────────────┘
+               │
+       ┌───────┴────────┐
+       │                │
+   ┌───▼────┐      ┌───▼────┐
+   │ Action │      │ Items  │
+   │Manager │      │Manager │
+   └───┬────┘      └───┬────┘
+       │               │
+   ┌───▼────┐      ┌───▼────┐
+   │17+ Act │      │Custom  │
+   │Types   │      │Items   │
+   └────────┘      └────────┘
+```

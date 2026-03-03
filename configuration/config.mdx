@@ -1,0 +1,618 @@
+---
+title: "Main Configuration"
+description: "Complete guide to configuring config.yml for Hubbly"
+---
+
+The `config.yml` file is the primary configuration file for Hubbly. It controls all aspects of your hub server including movement features, player settings, world events, and more.
+
+## General Settings
+
+<ParamField path="debug" type="boolean" default="false">
+  Enables debug mode for troubleshooting issues. Set to `true` to see detailed console logs.
+</ParamField>
+
+<ParamField path="prefix" type="string" default="&e&lHubbly &7&l>&r">
+  The plugin prefix used in messages sent to players. Supports color codes and hex colors.
+</ParamField>
+
+<ParamField path="check_for_update" type="boolean" default="true">
+  Checks for plugin updates on server startup.
+</ParamField>
+
+<ParamField path="notify_on_no_update" type="boolean" default="false">
+  Send a message if no update is available.
+</ParamField>
+
+<ParamField path="default_language" type="string" default="en">
+  The default language for plugin messages. Available: `en`, `pt`
+</ParamField>
+
+## Database Configuration
+
+<ParamField path="database.enabled" type="boolean" default="true">
+  Enable MySQL database storage for player data.
+</ParamField>
+
+<ParamField path="database.host" type="string" default="localhost">
+  Database host address.
+</ParamField>
+
+<ParamField path="database.port" type="integer" default="3306">
+  Database port number.
+</ParamField>
+
+<ParamField path="database.database" type="string" default="minecraft">
+  Database name.
+</ParamField>
+
+<ParamField path="database.username" type="string" default="hubbly">
+  Database username for authentication.
+</ParamField>
+
+<ParamField path="database.password" type="string" default="hubblypassword">
+  Database password for authentication.
+</ParamField>
+
+<Warning>
+  Always use a strong password for your database and never share your credentials.
+</Warning>
+
+## Movement Features
+
+### Launchpad
+
+<ParamField path="launchpad.enabled" type="boolean" default="true">
+  Enable launchpad functionality.
+</ParamField>
+
+<ParamField path="launchpad.type" type="material" default="SLIME_BLOCK">
+  The block type that acts as a launchpad.
+</ParamField>
+
+<ParamField path="launchpad.power" type="double" default="2">
+  Horizontal launch power multiplier.
+</ParamField>
+
+<ParamField path="launchpad.power_y" type="double" default="0.5">
+  Vertical launch power multiplier.
+</ParamField>
+
+<ParamField path="launchpad.cooldown" type="integer" default="2">
+  Cooldown in seconds between launchpad uses.
+</ParamField>
+
+<ParamField path="launchpad.sound" type="string" default="entity.firework_rocket.blast">
+  Sound effect played when using a launchpad.
+</ParamField>
+
+### Double Jump
+
+<ParamField path="double_jump.enabled" type="boolean" default="true">
+  Enable double jump ability for players.
+</ParamField>
+
+<ParamField path="double_jump.power" type="double" default="1.5">
+  Horizontal power of the double jump.
+</ParamField>
+
+<ParamField path="double_jump.power_y" type="double" default="0.5">
+  Vertical power of the double jump.
+</ParamField>
+
+<ParamField path="double_jump.cooldown" type="integer" default="2">
+  Cooldown in seconds between double jumps.
+</ParamField>
+
+<Note>
+  Cooldown values must be integers only.
+</Note>
+
+## Player Visibility
+
+<ParamField path="playervisibility.enabled" type="boolean" default="true">
+  Enable the player visibility toggle feature.
+</ParamField>
+
+<ParamField path="playervisibility.visible.item" type="material" default="LIME_DYE">
+  Item material when players are visible.
+</ParamField>
+
+<ParamField path="playervisibility.visible.text" type="string" default="&rPlayers: &aVisible">
+  Display text when players are visible.
+</ParamField>
+
+<ParamField path="playervisibility.hidden.item" type="material" default="GRAY_DYE">
+  Item material when players are hidden.
+</ParamField>
+
+<ParamField path="playervisibility.hidden.text" type="string" default="&rPlayers: &cHidden">
+  Display text when players are hidden.
+</ParamField>
+
+## Movement Items
+
+### Enderbow
+
+<ParamField path="movementitems.enderbow.material" type="material" default="BOW">
+  Material for the enderbow. **Do not change this.**
+</ParamField>
+
+<ParamField path="movementitems.enderbow.enabled" type="boolean" default="false">
+  Enable the enderbow item.
+</ParamField>
+
+<ParamField path="movementitems.enderbow.name" type="string" default="<#A020F0>Enderbow">
+  Display name of the enderbow. Supports hex colors.
+</ParamField>
+
+<ParamField path="movementitems.enderbow.cooldown" type="integer" default="3">
+  Cooldown in seconds.
+</ParamField>
+
+### Trident
+
+<ParamField path="movementitems.trident.material" type="material" default="TRIDENT">
+  Material for the trident. **Do not change this.**
+</ParamField>
+
+<ParamField path="movementitems.trident.enabled" type="boolean" default="true">
+  Enable the trident movement item.
+</ParamField>
+
+<ParamField path="movementitems.trident.name" type="string" default="<#40E0D0>Trident">
+  Display name of the trident.
+</ParamField>
+
+<ParamField path="movementitems.trident.cooldown" type="integer" default="3">
+  Cooldown in seconds.
+</ParamField>
+
+### Grappling Hook
+
+<ParamField path="movementitems.grappling_hook.material" type="material" default="FISHING_ROD">
+  Material for the grappling hook. **Do not change this.**
+</ParamField>
+
+<ParamField path="movementitems.grappling_hook.enabled" type="boolean" default="true">
+  Enable the grappling hook.
+</ParamField>
+
+<ParamField path="movementitems.grappling_hook.name" type="string" default="<#FFFF00>Grappling Hook">
+  Display name of the grappling hook.
+</ParamField>
+
+<ParamField path="movementitems.grappling_hook.cooldown" type="integer" default="3">
+  Cooldown in seconds.
+</ParamField>
+
+### Aspect of the End (AOTE)
+
+<ParamField path="movementitems.aote.material" type="material" default="DIAMOND_SWORD">
+  Material for the AOTE. You can change this.
+</ParamField>
+
+<ParamField path="movementitems.aote.enabled" type="boolean" default="true">
+  Enable the Aspect of the End teleport ability.
+</ParamField>
+
+<ParamField path="movementitems.aote.name" type="string" default="<#2d0043>Aspect of the End">
+  Display name of the AOTE.
+</ParamField>
+
+<ParamField path="movementitems.aote.cooldown" type="integer" default="1">
+  Cooldown in seconds.
+</ParamField>
+
+## Teleportation
+
+### Anti-Void
+
+<ParamField path="antivoid.enabled" type="boolean" default="true">
+  Automatically teleport players to spawn when they fall into the void.
+</ParamField>
+
+### Spawn Location
+
+<ParamField path="spawn.world" type="string" default="world">
+  World name for the spawn location.
+</ParamField>
+
+<ParamField path="spawn.x" type="double" default="0">
+  X coordinate of spawn.
+</ParamField>
+
+<ParamField path="spawn.y" type="double" default="200">
+  Y coordinate of spawn.
+</ParamField>
+
+<ParamField path="spawn.z" type="double" default="0">
+  Z coordinate of spawn.
+</ParamField>
+
+<ParamField path="spawn.yaw" type="float" default="0">
+  Yaw rotation of spawn. Auto-rounds to: -135, -90, -45, 0, 45, 90, 135 when using `/setspawn`.
+</ParamField>
+
+<ParamField path="spawn.pitch" type="float" default="0">
+  Pitch rotation of spawn.
+</ParamField>
+
+<ParamField path="spawn.timer" type="integer" default="2">
+  Delay in seconds before teleporting to spawn.
+</ParamField>
+
+<ParamField path="spawn.sound" type="string" default="entity.firework_rocket.blast">
+  Sound played when teleporting to spawn.
+</ParamField>
+
+<Note>
+  Yaw and pitch will round to specific values when using `/setspawn`, but you can manually override this in the config.
+</Note>
+
+## Player Settings
+
+<ParamField path="player.forceinventory" type="boolean" default="true">
+  Force players to have a specific inventory on join.
+</ParamField>
+
+### Experience Bar
+
+<ParamField path="player.experience.enabled" type="boolean" default="true">
+  Enable custom experience level display.
+</ParamField>
+
+<ParamField path="player.experience.level" type="integer" default="2025">
+  The experience level to display.
+</ParamField>
+
+<ParamField path="player.experience.progress" type="float" default="1.0">
+  Experience bar progress (0.0 - 1.0). Set to `"YEAR"` to base progress on time elapsed in the year.
+</ParamField>
+
+### Flight
+
+<ParamField path="player.fly.enabled" type="boolean" default="true">
+  Allow players to fly in the hub.
+</ParamField>
+
+### Join/Leave Messages
+
+<ParamField path="player.join_message.enabled" type="boolean" default="true">
+  Enable custom join messages.
+</ParamField>
+
+<ParamField path="player.join_message.message" type="string" default="%name% joined">
+  Join message format. Use `%name%` for player name.
+</ParamField>
+
+<ParamField path="player.leave_message.enabled" type="boolean" default="true">
+  Enable custom leave messages.
+</ParamField>
+
+<ParamField path="player.leave_message.message" type="string" default="%name% left">
+  Leave message format. Use `%name%` for player name.
+</ParamField>
+
+### Boss Bar
+
+<ParamField path="player.bossbar.enabled" type="boolean" default="true">
+  Enable animated boss bar display.
+</ParamField>
+
+<ParamField path="player.bossbar.color" type="string" default="PURPLE">
+  Boss bar color. Available: BLUE, GREEN, PINK, PURPLE, RED, WHITE, YELLOW.
+</ParamField>
+
+<ParamField path="player.bossbar.animation.change-interval" type="integer" default="40">
+  Interval in ticks between text changes (20 ticks = 1 second).
+</ParamField>
+
+<ParamField path="player.bossbar.animation.texts" type="array">
+  List of texts to cycle through. Supports color codes and hex colors.
+  
+  ```yaml
+  texts:
+    - '&6&lWelcome'
+    - '<#69b320>&lHello!'
+  ```
+</ParamField>
+
+## Actions on Join
+
+Define actions that execute when players join the server.
+
+<Accordion title="Available Action Types">
+  - **[TITLE]** - Display title to player: `[TITLE] <title>;<subtitle>;<fadeIn>;<stay>;<fadeOut>`
+  - **[SOUND]** - Play sound: `[SOUND] <sound_name>`
+  - **[FIREWORK]** - Spawn firework: `[FIREWORK] <type>;<red>;<green>;<blue>;<power>`
+  - **[ITEM]** - Give item: `[ITEM] <item_id>;<slot>`
+</Accordion>
+
+```yaml
+actions_on_join:
+  - '[TITLE] <#FFDF00>Hubbly;configure me;20;70;20'
+  - '[SOUND] block.note_block.chime'
+  - '[FIREWORK] BALL;255;0;255;2'
+  - '[ITEM] socials;1'
+  - '[ITEM] compass;5'
+  - '[ITEM] shop;9'
+```
+
+## World Event Manager
+
+Control which events are cancelled in your hub world.
+
+<ParamField path="cancel_events.block_place" type="boolean" default="true">
+  Cancel block placement.
+</ParamField>
+
+<ParamField path="cancel_events.block_break" type="boolean" default="true">
+  Cancel block breaking.
+</ParamField>
+
+<ParamField path="cancel_events.interact" type="boolean" default="true">
+  Cancel block/entity interactions.
+</ParamField>
+
+<ParamField path="cancel_events.damage" type="boolean" default="true">
+  Cancel player damage.
+</ParamField>
+
+<ParamField path="cancel_events.weather" type="boolean" default="true">
+  Cancel weather changes.
+</ParamField>
+
+<ParamField path="cancel_events.item_drop" type="boolean" default="true">
+  Cancel item dropping.
+</ParamField>
+
+<ParamField path="cancel_events.item_pickup" type="boolean" default="true">
+  Cancel item pickup.
+</ParamField>
+
+<ParamField path="cancel_events.item_throw" type="boolean" default="true">
+  Cancel item throwing.
+</ParamField>
+
+<ParamField path="cancel_events.hunger" type="boolean" default="true">
+  Cancel hunger depletion.
+</ParamField>
+
+<ParamField path="cancel_events.mob_spawn" type="boolean" default="true">
+  Cancel mob spawning.
+</ParamField>
+
+<ParamField path="cancel_events.block_burn" type="boolean" default="true">
+  Cancel block burning.
+</ParamField>
+
+<ParamField path="cancel_events.death_messages" type="boolean" default="true">
+  Cancel death messages.
+</ParamField>
+
+<ParamField path="cancel_events.leaf_decay" type="boolean" default="true">
+  Cancel leaf decay.
+</ParamField>
+
+<ParamField path="cancel_events.projectiles" type="boolean" default="false">
+  Cancel projectile usage.
+</ParamField>
+
+<ParamField path="cancel_events.animal_eat" type="boolean" default="false">
+  Cancel animals eating grass.
+</ParamField>
+
+### Anti World Download
+
+<ParamField path="anti_world_download.enabled" type="boolean" default="true">
+  Enable protection against world download mods.
+</ParamField>
+
+<ParamField path="anti_world_download.notify_admin" type="boolean" default="true">
+  Notify admins when a world download attempt is detected.
+</ParamField>
+
+## Chat Management
+
+<ParamField path="lock_chat" type="boolean" default="false">
+  Lock the chat so only operators can send messages.
+</ParamField>
+
+### Blocked Words
+
+<ParamField path="blocked_words.enabled" type="boolean" default="false">
+  Enable word filtering.
+</ParamField>
+
+<ParamField path="blocked_words.method" type="string" default="">
+  Filter method: `STAR` (replace with ****) or `CANCEL` (block message).
+</ParamField>
+
+<ParamField path="blocked_words.words" type="array">
+  List of words to filter.
+  
+  ```yaml
+  words:
+    - 'Fuck'
+  ```
+</ParamField>
+
+### Blocked Commands
+
+<ParamField path="blocked_commands" type="array">
+  List of commands to block for non-operators.
+  
+  ```yaml
+  blocked_commands:
+    - 'pl'
+    - 'plugins'
+    - 'op'
+    - 'stop'
+    - 'reload'
+  ```
+</ParamField>
+
+## Announcements
+
+<ParamField path="announcements.enabled" type="boolean" default="true">
+  Enable automatic announcements.
+</ParamField>
+
+<ParamField path="announcements.interval" type="integer" default="30">
+  Interval in seconds between announcements.
+</ParamField>
+
+<ParamField path="announcements.global" type="boolean" default="true">
+  Send announcements even if the player is in a disabled world.
+</ParamField>
+
+<ParamField path="announcements.messages" type="object">
+  Define announcement messages. Each message is an array of lines.
+  
+  ```yaml
+  messages:
+    message1:
+      - '<#FF00FF><center> Test</center>'
+      - '<center><#084CFB>This is an announcement</center>'
+    message2:
+      - 'Test2'
+      - 'This is a second announcement'
+  ```
+</ParamField>
+
+<Note>
+  You can use [BirdFlop RGB](https://www.birdflop.com/resources/rgb/) to create cool gradient text!
+</Note>
+
+## Complete Example
+
+<Accordion title="View Full config.yml Example">
+```yaml
+debug: false
+prefix: '&e&lHubbly &7&l>&r'
+check_for_update: true
+notify_on_no_update: false
+default_language: en
+
+database:
+  enabled: true
+  host: localhost
+  port: 3306
+  database: minecraft
+  username: hubbly
+  password: hubblypassword
+
+disabled-worlds:
+  - 'world_nether'
+
+invert: false
+
+launchpad:
+  enabled: true
+  type: "SLIME_BLOCK"
+  power: 2
+  power_y: 0.5
+  cooldown: 2
+  sound: entity.firework_rocket.blast
+
+double_jump:
+  enabled: true
+  power: 1.5
+  power_y: 0.5
+  cooldown: 2
+
+playervisibility:
+  enabled: true
+  visible:
+    item: 'LIME_DYE'
+    text: '&rPlayers: &aVisible'
+  hidden:
+    item: 'GRAY_DYE'
+    text: '&rPlayers: &cHidden'
+
+antivoid:
+  enabled: true
+
+spawn:
+  world: "world"
+  x: 0
+  y: 200
+  z: 0
+  yaw: 0
+  pitch: 0
+  timer: 2
+  sound: entity.firework_rocket.blast
+
+player:
+  forceinventory: true
+  experience:
+    enabled: true
+    level: 2025
+    progress: 1.0
+  fly:
+    enabled: true
+  join_message:
+    enabled: true
+    message: "%name% joined"
+  leave_message:
+    enabled: true
+    message: "%name% left"
+  bossbar:
+    enabled: true
+    color: "PURPLE"
+    animation:
+      change-interval: 40
+      texts:
+        - '&6&lWelcome'
+        - '<#69b320>&lHello!'
+
+actions_on_join:
+  - '[TITLE] <#FFDF00>Hubbly;configure me;20;70;20'
+  - '[SOUND] block.note_block.chime'
+  - '[FIREWORK] BALL;255;0;255;2'
+  - '[ITEM] socials;1'
+  - '[ITEM] compass;5'
+
+cancel_events:
+  block_place: true
+  block_break: true
+  interact: true
+  damage: true
+  weather: true
+  item_drop: true
+  item_pickup: true
+  item_throw: true
+  hunger: true
+  mob_spawn: true
+  block_burn: true
+  death_messages: true
+  leaf_decay: true
+  projectiles: false
+  animal_eat: false
+
+anti_world_download:
+  enabled: true
+  notify_admin: true
+
+lock_chat: false
+
+blocked_words:
+  enabled: false
+  method: ''
+  words:
+    - 'Example'
+
+blocked_commands:
+  - 'pl'
+  - 'plugins'
+  - 'op'
+
+announcements:
+  enabled: true
+  interval: 30
+  global: true
+  messages:
+    message1:
+      - '<#FF00FF><center>Welcome!</center>'
+```
+</Accordion>

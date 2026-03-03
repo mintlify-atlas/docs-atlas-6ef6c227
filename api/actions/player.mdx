@@ -1,0 +1,327 @@
+---
+title: Player Actions
+description: Actions that affect players, execute commands, and manage inventory
+---
+
+Player actions control player state, execute commands, send messages, and manage inventory.
+
+## PLAYER
+
+Execute a command as if the player typed it in chat.
+
+<ParamField path="command" type="string" required>
+  The command to execute. Leading slash is optional.
+</ParamField>
+
+### Examples
+
+<CodeGroup>
+```yaml Basic Command
+actions:
+  - "[PLAYER] spawn"
+```
+
+```yaml With Slash
+actions:
+  - "[PLAYER] /hubbly menu movement"
+```
+
+```yaml Item Shop
+actions:
+  - "[PLAYER] buy"
+```
+</CodeGroup>
+
+### Real-World Usage
+
+From `items.yml` - Shop item:
+
+```yaml
+shop:
+  name: "&aShop"
+  material: EMERALD_BLOCK
+  lore:
+    - "&7Opens the shop"
+  actions:
+    - "[PLAYER] buy"
+```
+
+<Note>
+  The command executes with the player's permissions. For admin commands, use CONSOLE instead.
+</Note>
+
+---
+
+## CONSOLE
+
+Execute a command from the console with full permissions.
+
+<ParamField path="command" type="string" required>
+  The command to execute from console. The `%player_name%` placeholder is automatically available.
+</ParamField>
+
+### Placeholders
+
+- `%player_name%` - The player's username
+- Any PlaceholderAPI placeholders
+
+### Examples
+
+<CodeGroup>
+```yaml Give Item
+actions:
+  - "[CONSOLE] give %player_name% diamond 64"
+```
+
+```yaml Permissions
+actions:
+  - "[CONSOLE] lp user %player_name% permission set vip.rank"
+```
+
+```yaml Economy
+actions:
+  - "[CONSOLE] eco give %player_name% 1000"
+```
+</CodeGroup>
+
+<Warning>
+  Console commands bypass all permission checks. Use carefully and validate user input.
+</Warning>
+
+---
+
+## GAMEMODE
+
+Change the player's gamemode.
+
+<ParamField path="gamemode" type="enum" required>
+  The gamemode to set. Must be one of: `SURVIVAL`, `CREATIVE`, `ADVENTURE`, `SPECTATOR`
+</ParamField>
+
+### Examples
+
+<CodeGroup>
+```yaml Creative Mode
+actions:
+  - "[GAMEMODE] CREATIVE"
+```
+
+```yaml Survival Mode
+actions:
+  - "[GAMEMODE] SURVIVAL"
+```
+
+```yaml Adventure Mode
+actions:
+  - "[GAMEMODE] ADVENTURE"
+```
+</CodeGroup>
+
+<Note>
+  Gamemode names are case-insensitive but must be valid Bukkit GameMode values.
+</Note>
+
+---
+
+## MESSAGE
+
+Send a message to the player.
+
+<ParamField path="message" type="string" required>
+  The message to send. Supports color codes and PlaceholderAPI.
+</ParamField>
+
+### Examples
+
+<CodeGroup>
+```yaml Simple Message
+actions:
+  - "[MESSAGE] &aWelcome to the server!"
+```
+
+```yaml With Placeholders
+actions:
+  - "[MESSAGE] &7Hello %player_name%! You have %player_level% levels."
+```
+
+```yaml Hex Colors
+actions:
+  - "[MESSAGE] <#FFD700>Premium feature unlocked!"
+```
+</CodeGroup>
+
+### Color Support
+
+- Legacy color codes: `&a`, `&c`, `&l`, etc.
+- Hex colors: `<#RRGGBB>`
+- PlaceholderAPI placeholders
+
+---
+
+## BROADCAST
+
+Broadcast a message to all online players.
+
+<ParamField path="message" type="string" required>
+  The message to broadcast. Supports color codes including hex colors.
+</ParamField>
+
+### Examples
+
+<CodeGroup>
+```yaml Server Announcement
+actions:
+  - "[BROADCAST] &c&lSERVER RESTART IN 5 MINUTES"
+```
+
+```yaml Event Notification
+actions:
+  - "[BROADCAST] &6⚔ &ePvP Event starting now!"
+```
+
+```yaml Hex Colors
+actions:
+  - "[BROADCAST] <#FF6B6B>Important announcement!"
+```
+</CodeGroup>
+
+---
+
+## CLEAR
+
+Clear the player's inventory completely.
+
+<ParamField path="parameters" type="none">
+  This action takes no parameters.
+</ParamField>
+
+### Examples
+
+```yaml
+actions:
+  - "[CLEAR]"
+```
+
+<Warning>
+  This action immediately clears the entire inventory with no confirmation. Use with caution.
+</Warning>
+
+### Common Use Cases
+
+<Accordion title="Lobby join - clear inventory">
+  ```yaml
+  # In a join event or lobby warp
+  actions:
+    - "[CLEAR]"
+    - "[ITEM] compass"
+    - "[ITEM] socials"
+  ```
+</Accordion>
+
+<Accordion title="Minigame start - reset player">
+  ```yaml
+  actions:
+    - "[CLEAR]"
+    - "[GAMEMODE] ADVENTURE"
+    - "[CONSOLE] give %player_name% diamond_sword 1"
+  ```
+</Accordion>
+
+---
+
+## ITEM
+
+Give a custom item from `items.yml` to the player.
+
+<ParamField path="item_name" type="string" required>
+  The ID of the item from items.yml
+</ParamField>
+
+<ParamField path="slot" type="integer">
+  Optional. The inventory slot to place the item (1-9 for hotbar)
+</ParamField>
+
+### Syntax
+
+```
+[ITEM] item_name
+[ITEM] item_name;slot
+```
+
+### Examples
+
+<CodeGroup>
+```yaml Basic Item
+actions:
+  - "[ITEM] compass"
+```
+
+```yaml Item in Specific Slot
+actions:
+  - "[ITEM] compass;1"
+  - "[ITEM] socials;9"
+```
+
+```yaml Multiple Items
+actions:
+  - "[ITEM] compass;1"
+  - "[ITEM] movement;2"
+  - "[ITEM] shop;9"
+```
+</CodeGroup>
+
+### Implementation Details
+
+The ITEM action internally uses the console command:
+
+```
+hubbly give <player> <item> [amount] [slot]
+```
+
+<Note>
+  The item must be defined in `items.yml`. If the item doesn't exist, the action will fail silently.
+</Note>
+
+---
+
+## Complete Examples
+
+<Accordion title="Lobby starter kit">
+  ```yaml
+  # Give player lobby items on join
+  actions:
+    - "[CLEAR]"
+    - "[GAMEMODE] ADVENTURE"
+    - "[ITEM] compass;1"
+    - "[ITEM] movement;2"
+    - "[ITEM] socials;8"
+    - "[ITEM] shop;9"
+    - "[MESSAGE] &aWelcome to the lobby!"
+  ```
+</Accordion>
+
+<Accordion title="VIP rank purchase">
+  ```yaml
+  # Purchase confirmation and rank assignment
+  actions:
+    - "[CONSOLE] eco take %player_name% 5000"
+    - "[CONSOLE] lp user %player_name% parent set vip"
+    - "[BROADCAST] <#FFD700>%player_name% purchased VIP rank!"
+    - "[MESSAGE] &aThank you for supporting the server!"
+    - "[TITLE] &6&lVIP RANK;&aActivated;10;70;20"
+    - "[SOUND] UI_TOAST_CHALLENGE_COMPLETE"
+  ```
+</Accordion>
+
+<Accordion title="Admin teleport tool">
+  ```yaml
+  # From items.yml - admin compass
+  admin_compass:
+    name: "&cAdmin Tools"
+    material: RECOVERY_COMPASS
+    actions:
+      - "[PLAYER] tp %target_player%"
+      - "[MESSAGE] &7Teleported to target"
+      - "[SOUND] ENTITY_ENDERMAN_TELEPORT"
+  ```
+</Accordion>

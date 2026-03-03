@@ -1,0 +1,517 @@
+---
+title: BungeeCord Integration
+description: Set up BungeeCord integration to create server selectors and network teleportation
+---
+
+Hubbly includes built-in BungeeCord support, allowing players to transfer between servers in your network using the `[BUNGEE]` action.
+
+## Prerequisites
+
+<Steps>
+  <Step title="BungeeCord Network">
+    Ensure you have a BungeeCord or Waterfall proxy set up with multiple servers.
+  </Step>
+
+  <Step title="Install Hubbly">
+    Install Hubbly on each server where you want to use BungeeCord actions (typically your hub/lobby server).
+  </Step>
+
+  <Step title="Configure BungeeCord">
+    Verify your server names in `config.yml` on your BungeeCord proxy.
+  </Step>
+</Steps>
+
+<Note>
+No special BungeeCord plugin configuration is needed. Hubbly uses the standard BungeeCord messaging channel.
+</Note>
+
+## How It Works
+
+Hubbly uses the `BungeeCord` plugin messaging channel to send players between servers:
+
+```java BungeeAction.java
+public void execute(Hubbly plugin, Player player, String data) {
+    if (plugin.getServer().getMessenger().isOutgoingChannelRegistered(plugin, "BungeeCord")) {
+        if(data.contains("server ")) {
+            data = data.replace("server ", "");
+        }
+        final ByteArrayDataOutput out = ByteStreams.newDataOutput();
+        out.writeUTF("Connect");
+        out.writeUTF(data);
+        player.sendPluginMessage(plugin, "BungeeCord", out.toByteArray());
+    }
+}
+```
+
+## BUNGEE Action Syntax
+
+### Basic Usage
+
+```yaml
+actions:
+  - "[BUNGEE] survival"
+```
+
+### With "server" Prefix (Optional)
+
+```yaml
+actions:
+  - "[BUNGEE] server survival"
+```
+
+Both formats work identically. The "server" prefix is automatically removed.
+
+### Parameters
+
+| Parameter | Description | Example |
+|-----------|-------------|----------|
+| Server name | Name from BungeeCord config | `survival`, `creative`, `lobby` |
+
+<Warning>
+The server name must exactly match the name in your BungeeCord `config.yml`.
+</Warning>
+
+## Server Selector Menu
+
+Create a menu that allows players to choose which server to join:
+
+```yaml menus/selector.yml
+title: "&cServer Selector"
+size: 36
+items:
+  survival:
+    material: GRASS_BLOCK
+    name: "<#CCFFDD>Survival Server"
+    slot: 12
+    lore:
+      - "&aJoin the Survival Server!"
+      - ""
+      - "&7Click to connect"
+    actions:
+      - "[BUNGEE] survival"
+  
+  creative:
+    material: COMMAND_BLOCK
+    name: "&eCreative Server"
+    slot: 14
+    lore:
+      - "&aJoin the Creative Server!"
+      - ""
+      - "&7Click to connect"
+    actions:
+      - "[BUNGEE] creative"
+  
+  minigames:
+    material: GOLD_BLOCK
+    name: "&6Minigames"
+    slot: 22
+    lore:
+      - "&aJoin the Minigames Server!"
+      - ""
+      - "&7Click to connect"
+    actions:
+      - "[BUNGEE] minigames"
+  
+  fill:
+    slot: -1
+    material: BLACK_STAINED_GLASS_PANE
+    name: " "
+    actions:
+      - "[CLOSE]"
+```
+
+## Enhanced Server Selector
+
+Add sound and visual feedback:
+
+```yaml menus/selector.yml
+title: "&cServer Selector"
+size: 27
+items:
+  survival:
+    material: GRASS_BLOCK
+    name: "&aSurvival"
+    slot: 11
+    lore:
+      - "&7A classic survival experience"
+      - ""
+      - "&aClick to join!"
+    actions:
+      - "[SOUND] ENTITY_PLAYER_LEVELUP"
+      - "[TITLE] &aSurvival;&7Connecting...;10;40;10"
+      - "[BUNGEE] survival"
+  
+  creative:
+    material: DIAMOND_BLOCK
+    name: "&eCreative"
+    slot: 13
+    lore:
+      - "&7Build anything you can imagine"
+      - ""
+      - "&eClick to join!"
+    actions:
+      - "[SOUND] ENTITY_PLAYER_LEVELUP"
+      - "[TITLE] &eCreative;&7Connecting...;10;40;10"
+      - "[BUNGEE] creative"
+  
+  pvp:
+    material: DIAMOND_SWORD
+    name: "&cPvP Arena"
+    slot: 15
+    lore:
+      - "&7Test your combat skills"
+      - ""
+      - "&cClick to join!"
+    actions:
+      - "[SOUND] ENTITY_PLAYER_LEVELUP"
+      - "[TITLE] &cPvP Arena;&7Connecting...;10;40;10"
+      - "[BUNGEE] pvp"
+```
+
+## Server Selector Item
+
+Create an item that opens the server selector:
+
+```yaml items.yml
+items:
+  compass:
+    name: "&cServer Selector"
+    material: COMPASS
+    glow: true
+    lore:
+      - "&7Right click to open"
+      - "&7the server selector!"
+    actions:
+      - "[MENU] selector"
+```
+
+Give players the item:
+```
+/hubbly give compass
+```
+
+## Direct Teleport Items
+
+Create items that directly send players to servers:
+
+```yaml items.yml
+items:
+  survival_portal:
+    name: "&a&lSurvival Portal"
+    material: ENDER_PEARL
+    glow: true
+    lore:
+      - "&7Click to join Survival"
+    actions:
+      - "[SOUND] ENTITY_ENDERMAN_TELEPORT"
+      - "[TITLE] &aSurvival;&7Connecting...;10;40;10"
+      - "[BUNGEE] survival"
+  
+  minigames_portal:
+    name: "&6&lMinigames Portal"
+    material: NETHER_STAR
+    glow: true
+    lore:
+      - "&7Click to join Minigames"
+    actions:
+      - "[SOUND] ENTITY_ENDERMAN_TELEPORT"
+      - "[TITLE] &6Minigames;&7Connecting...;10;40;10"
+      - "[BUNGEE] minigames"
+```
+
+## PlaceholderAPI Integration
+
+Show live server player counts (requires BungeeCord expansion):
+
+<Steps>
+  <Step title="Install BungeeCord Expansion">
+    ```
+    /papi ecloud download bungee
+    /papi reload
+    ```
+  </Step>
+
+  <Step title="Use in Menu">
+    ```yaml menus/selector.yml
+    items:
+      survival:
+        name: "&aSurvival"
+        lore:
+          - "&7Players: &f%bungee_survival%"
+          - "&aClick to join!"
+        actions:
+          - "[BUNGEE] survival"
+    ```
+  </Step>
+</Steps>
+
+### Dynamic Server Selector
+
+```yaml menus/selector.yml
+title: "&cServers - %bungee_total% Online"
+size: 27
+items:
+  survival:
+    material: GRASS_BLOCK
+    name: "&aSurvival"
+    slot: 11
+    lore:
+      - "&7Mode: &fSurvival"
+      - "&7Players: &a%bungee_survival%"
+      - ""
+      - "&aClick to join!"
+    actions:
+      - "[BUNGEE] survival"
+  
+  creative:
+    material: COMMAND_BLOCK
+    name: "&eCreative"
+    slot: 13
+    lore:
+      - "&7Mode: &fCreative"
+      - "&7Players: &e%bungee_creative%"
+      - ""
+      - "&eClick to join!"
+    actions:
+      - "[BUNGEE] creative"
+  
+  minigames:
+    material: GOLD_BLOCK
+    name: "&6Minigames"
+    slot: 15
+    lore:
+      - "&7Mode: &fMinigames"
+      - "&7Players: &6%bungee_minigames%"
+      - ""
+      - "&6Click to join!"
+    actions:
+      - "[BUNGEE] minigames"
+```
+
+## BungeeCord Configuration
+
+Ensure your BungeeCord `config.yml` has the correct server names:
+
+```yaml config.yml
+servers:
+  lobby:
+    motd: 'Lobby Server'
+    address: localhost:25565
+    restricted: false
+  
+  survival:
+    motd: 'Survival Server'
+    address: localhost:25566
+    restricted: false
+  
+  creative:
+    motd: 'Creative Server'
+    address: localhost:25567
+    restricted: false
+  
+  minigames:
+    motd: 'Minigames Server'
+    address: localhost:25568
+    restricted: false
+```
+
+<Note>
+The server names in your menu configuration must match the server names in BungeeCord's config.
+</Note>
+
+## Advanced Examples
+
+### Categorized Server Menu
+
+```yaml menus/network.yml
+title: "&6Network Menu"
+size: 54
+items:
+  # Survival Servers
+  survival_label:
+    material: OAK_SIGN
+    name: "&a&lSurvival Servers"
+    slot: 10
+  
+  survival1:
+    material: GRASS_BLOCK
+    name: "&aSurvival 1"
+    slot: 19
+    lore:
+      - "&7Players: %bungee_survival1%"
+    actions:
+      - "[BUNGEE] survival1"
+  
+  survival2:
+    material: GRASS_BLOCK
+    name: "&aSurvival 2"
+    slot: 20
+    lore:
+      - "&7Players: %bungee_survival2%"
+    actions:
+      - "[BUNGEE] survival2"
+  
+  # Minigame Servers
+  minigame_label:
+    material: OAK_SIGN
+    name: "&6&lMinigame Servers"
+    slot: 14
+  
+  bedwars:
+    material: RED_BED
+    name: "&cBedWars"
+    slot: 23
+    lore:
+      - "&7Players: %bungee_bedwars%"
+    actions:
+      - "[BUNGEE] bedwars"
+  
+  skywars:
+    material: GOLDEN_SWORD
+    name: "&eSkyWars"
+    slot: 24
+    lore:
+      - "&7Players: %bungee_skywars%"
+    actions:
+      - "[BUNGEE] skywars"
+```
+
+### Hub Return Item
+
+Allow players to return to hub from any server:
+
+```yaml items.yml
+items:
+  hub_return:
+    name: "&c&lReturn to Hub"
+    material: NETHER_STAR
+    glow: true
+    lore:
+      - "&7Click to return to the hub"
+    actions:
+      - "[SOUND] ENTITY_ENDERMAN_TELEPORT"
+      - "[TITLE] &cHub;&7Returning...;10;40;10"
+      - "[BUNGEE] lobby"
+```
+
+### VIP Server Access
+
+Create permission-restricted server items:
+
+```yaml menus/vip-selector.yml
+title: "&6VIP Servers"
+size: 27
+permission: hubbly.vip
+items:
+  vip_survival:
+    material: DIAMOND_BLOCK
+    name: "&b&lVIP Survival"
+    slot: 13
+    lore:
+      - "&7Exclusive VIP-only survival"
+      - "&7Players: %bungee_vip_survival%"
+      - ""
+      - "&bClick to join!"
+    actions:
+      - "[SOUND] ENTITY_PLAYER_LEVELUP"
+      - "[TITLE] &b&lVIP Survival;&7Connecting...;10;40;10"
+      - "[BUNGEE] vip_survival"
+```
+
+## Troubleshooting
+
+### Players Not Transferring
+
+<Warning>
+If players aren't being transferred, check:
+</Warning>
+
+1. **BungeeCord messaging channel is registered**
+   - This is automatic, but verify in server logs
+   - Look for: "Channel BungeeCord is not registered!"
+
+2. **Server name matches BungeeCord config**
+   ```yaml
+   # Hubbly menu
+   actions:
+     - "[BUNGEE] survival"  # Must match BungeeCord name
+   
+   # BungeeCord config.yml
+   servers:
+     survival:  # Must match exactly
+       address: localhost:25566
+   ```
+
+3. **Player has permission to join target server**
+   - Check BungeeCord permissions
+   - Verify no restrictions in BungeeCord config
+
+### Debug Mode
+
+Enable debug mode in Hubbly to see BungeeCord messages:
+
+```yaml config.yml
+debug: true
+```
+
+Look for messages like:
+```
+[Hubbly] Server: survival
+[Hubbly] Executing action: BUNGEE survival
+```
+
+### Channel Not Registered
+
+If you see "Channel BungeeCord is not registered!", the messaging channel failed to initialize. This usually resolves after a server restart.
+
+## Best Practices
+
+1. **Consistent Naming** - Use clear, consistent server names across your network
+2. **Visual Feedback** - Always add sound and title actions for better UX
+3. **Player Counts** - Show live player counts with PlaceholderAPI
+4. **Hub Returns** - Provide easy ways to return to the hub
+5. **Categories** - Organize servers by type in larger networks
+6. **Permissions** - Restrict access to VIP/special servers appropriately
+
+## Common Patterns
+
+### Transfer with Confirmation
+
+```yaml
+actions:
+  - "[MESSAGE] &7Connecting to &aSurvival&7..."
+  - "[SOUND] ENTITY_EXPERIENCE_ORB_PICKUP"
+  - "[TITLE] &aSurvival;&7Please wait...;10;60;10"
+  - "[BUNGEE] survival"
+```
+
+### Quick Transfer
+
+```yaml
+actions:
+  - "[BUNGEE] survival"
+```
+
+### Immersive Transfer
+
+```yaml
+actions:
+  - "[EFFECT] blindness;40;1"
+  - "[SOUND] ENTITY_ENDERMAN_TELEPORT"
+  - "[TITLE] &5&lTeleporting...;;10;30;10"
+  - "[BUNGEE] survival"
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Creating Menus" icon="table-cells" href="/guides/creating-menus">
+    Build server selector menus
+  </Card>
+  <Card title="Action System" icon="bolt" href="/guides/action-system">
+    Explore all available actions
+  </Card>
+  <Card title="PlaceholderAPI" icon="code" href="/guides/placeholderapi">
+    Show live server data
+  </Card>
+</CardGroup>

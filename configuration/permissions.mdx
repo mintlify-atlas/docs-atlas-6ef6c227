@@ -1,0 +1,395 @@
+---
+title: "Permission Nodes"
+description: "Complete reference for all Hubbly permission nodes"
+---
+
+Hubbly uses a comprehensive permission system to control access to features and commands. This page documents all available permission nodes.
+
+## Permission Groups
+
+### Master Permissions
+
+<ParamField path="hubbly.*" default="op">
+  Gives access to all Hubbly commands and features. Recommended for administrators only.
+</ParamField>
+
+<ParamField path="hubbly.hubbly" default="true">
+  Access to the base `/hubbly` command.
+</ParamField>
+
+## Command Permissions
+
+### Admin Commands
+
+<ParamField path="hubbly.command.*" default="op">
+  Access to all administrative commands.
+  
+  **Children:**
+  - `hubbly.command.setspawn`
+  - `hubbly.command.spawn`
+  - `hubbly.command.clearchat`
+  - `hubbly.command.fly`
+  - `hubbly.command.reload`
+  - `hubbly.command.give`
+  - `hubbly.command.nextannouncement`
+</ParamField>
+
+<ParamField path="hubbly.command.setspawn" default="op">
+  Permission to set the spawn location using `/setspawn`.
+</ParamField>
+
+<ParamField path="hubbly.command.spawn" default="true">
+  Permission to use the `/spawn` command. Available to all players by default.
+</ParamField>
+
+<ParamField path="hubbly.command.fly" default="op">
+  Permission to toggle flight mode with `/fly`.
+</ParamField>
+
+<ParamField path="hubbly.command.clearchat" default="op">
+  Permission to clear the chat using `/clearchat` (aliases: `/cc`, `/clearc`, `/cchat`).
+</ParamField>
+
+<ParamField path="hubbly.command.reload" default="op">
+  Permission to reload the plugin configuration.
+</ParamField>
+
+<ParamField path="hubbly.command.give" default="op">
+  Permission to give custom items to players using `/hubbly give <item>`.
+</ParamField>
+
+<ParamField path="hubbly.command.nextannouncement" default="op">
+  Permission to trigger the next announcement immediately.
+</ParamField>
+
+## Feature Usage Permissions
+
+### Use Permissions
+
+<ParamField path="hubbly.use.*" default="false">
+  Access to use all hub features.
+  
+  **Children:**
+  - `hubbly.use.compass` - Use compass/server selector
+  - `hubbly.use.launchpad` - Use launchpads
+  - `hubbly.use.playervisibility` - Toggle player visibility
+  - `hubbly.use.socials` - Use socials menu
+  - `hubbly.use.trident` - Use movement trident
+  - `hubbly.use.enderbow` - Use enderbow
+  - `hubbly.use.aote` - Use Aspect of the End
+  - `hubbly.use.grapplinghook` - Use grappling hook
+</ParamField>
+
+<ParamField path="hubbly.use.compass" default="true">
+  Permission to use the compass item and server selector.
+</ParamField>
+
+<ParamField path="hubbly.use.launchpad" default="true">
+  Permission to use launchpad blocks.
+</ParamField>
+
+<ParamField path="hubbly.use.playervisibility" default="true">
+  Permission to toggle player visibility.
+</ParamField>
+
+<ParamField path="hubbly.use.socials" default="true">
+  Permission to use the socials menu.
+</ParamField>
+
+<ParamField path="hubbly.use.trident" default="false">
+  Permission to use the movement trident item.
+</ParamField>
+
+<ParamField path="hubbly.use.enderbow" default="false">
+  Permission to use the enderbow movement item.
+</ParamField>
+
+<ParamField path="hubbly.use.aote" default="false">
+  Permission to use the Aspect of the End teleport ability.
+</ParamField>
+
+<ParamField path="hubbly.use.grapplinghook" default="false">
+  Permission to use the grappling hook item.
+</ParamField>
+
+## Bypass Permissions
+
+### Master Bypass
+
+<ParamField path="hubbly.bypass" default="op">
+  General bypass permission.
+</ParamField>
+
+<ParamField path="hubbly.bypass.*" default="op">
+  Bypass all restrictions and protections.
+  
+  **Children:**
+  - `hubbly.bypass.forceinventory`
+  - `hubbly.bypass.antiswear`
+  - `hubbly.bypass.item`
+  - `hubbly.bypass.item.pickup`
+  - `hubbly.bypass.item.drop`
+  - `hubbly.bypass.damage`
+  - `hubbly.bypass.place`
+  - `hubbly.bypass.break`
+  - `hubbly.bypass.food`
+  - `hubbly.bypass.blockedcommands`
+  - `hubbly.bypass.item.throw`
+  - `hubbly.bypass.antiwdl`
+  - `hubbly.bypass.projectiles`
+  - `hubbly.bypass.offhand`
+</ParamField>
+
+### Specific Bypasses
+
+<ParamField path="hubbly.bypass.forceinventory" default="op">
+  Bypass forced inventory management. Players with this permission can modify their inventory freely.
+</ParamField>
+
+<ParamField path="hubbly.bypass.antiswear" default="op">
+  Bypass the profanity filter for blocked words.
+</ParamField>
+
+<ParamField path="hubbly.bypass.blockedcommands" default="op">
+  Bypass blocked command restrictions.
+</ParamField>
+
+<ParamField path="hubbly.bypass.item" default="op">
+  Bypass all item-related restrictions.
+  
+  **Children:**
+  - `hubbly.bypass.item.pickup`
+  - `hubbly.bypass.item.drop`
+  - `hubbly.bypass.item.throw`
+</ParamField>
+
+<ParamField path="hubbly.bypass.item.pickup" default="op">
+  Bypass the item pickup prevention.
+</ParamField>
+
+<ParamField path="hubbly.bypass.item.drop" default="op">
+  Bypass the item drop prevention.
+</ParamField>
+
+<ParamField path="hubbly.bypass.item.throw" default="op">
+  Bypass the item throw prevention.
+</ParamField>
+
+<ParamField path="hubbly.bypass.damage" default="op">
+  Bypass damage prevention. Player can take damage.
+</ParamField>
+
+<ParamField path="hubbly.bypass.place" default="op">
+  Bypass block placement prevention.
+</ParamField>
+
+<ParamField path="hubbly.bypass.break" default="op">
+  Bypass block breaking prevention.
+</ParamField>
+
+<ParamField path="hubbly.bypass.food" default="op">
+  Bypass hunger prevention. Player's hunger can deplete.
+</ParamField>
+
+<ParamField path="hubbly.bypass.offhand" default="op">
+  Bypass offhand restrictions.
+</ParamField>
+
+<ParamField path="hubbly.bypass.antiwdl" default="op">
+  Bypass anti-world-download protection.
+</ParamField>
+
+<ParamField path="hubbly.bypass.projectiles" default="op">
+  Bypass projectile restrictions.
+</ParamField>
+
+## Notification Permissions
+
+<ParamField path="hubbly.notify.antiwdl" default="false">
+  Receive notifications when a world download attempt is detected.
+</ParamField>
+
+## Permission Examples
+
+### Default Player Setup
+
+<Tabs>
+  <Tab title="LuckPerms">
+    ```bash
+    # Basic access
+    lp group default permission set hubbly.hubbly true
+    lp group default permission set hubbly.command.spawn true
+    
+    # Hub features
+    lp group default permission set hubbly.use.compass true
+    lp group default permission set hubbly.use.launchpad true
+    lp group default permission set hubbly.use.playervisibility true
+    lp group default permission set hubbly.use.socials true
+    ```
+  </Tab>
+  
+  <Tab title="GroupManager">
+    ```yaml
+    groups:
+      default:
+        permissions:
+          - hubbly.hubbly
+          - hubbly.command.spawn
+          - hubbly.use.compass
+          - hubbly.use.launchpad
+          - hubbly.use.playervisibility
+          - hubbly.use.socials
+    ```
+  </Tab>
+  
+  <Tab title="PermissionsEx">
+    ```bash
+    pex group default add hubbly.hubbly
+    pex group default add hubbly.command.spawn
+    pex group default add hubbly.use.compass
+    pex group default add hubbly.use.launchpad
+    pex group default add hubbly.use.playervisibility
+    pex group default add hubbly.use.socials
+    ```
+  </Tab>
+</Tabs>
+
+### VIP Player Setup
+
+<Tabs>
+  <Tab title="LuckPerms">
+    ```bash
+    # All default features plus movement items
+    lp group vip permission set hubbly.use.* true
+    lp group vip permission set hubbly.command.fly true
+    ```
+  </Tab>
+  
+  <Tab title="GroupManager">
+    ```yaml
+    groups:
+      vip:
+        inheritance:
+          - default
+        permissions:
+          - hubbly.use.*
+          - hubbly.command.fly
+    ```
+  </Tab>
+</Tabs>
+
+### Moderator Setup
+
+<Tabs>
+  <Tab title="LuckPerms">
+    ```bash
+    # Chat management
+    lp group mod permission set hubbly.command.clearchat true
+    lp group mod permission set hubbly.command.lockchat true
+    
+    # Bypasses for building
+    lp group mod permission set hubbly.bypass.place true
+    lp group mod permission set hubbly.bypass.break true
+    lp group mod permission set hubbly.bypass.damage true
+    
+    # Notifications
+    lp group mod permission set hubbly.notify.antiwdl true
+    ```
+  </Tab>
+  
+  <Tab title="GroupManager">
+    ```yaml
+    groups:
+      mod:
+        inheritance:
+          - vip
+        permissions:
+          - hubbly.command.clearchat
+          - hubbly.command.lockchat
+          - hubbly.bypass.place
+          - hubbly.bypass.break
+          - hubbly.bypass.damage
+          - hubbly.notify.antiwdl
+    ```
+  </Tab>
+</Tabs>
+
+### Admin Setup
+
+<Tabs>
+  <Tab title="LuckPerms">
+    ```bash
+    # Full access
+    lp group admin permission set hubbly.* true
+    ```
+  </Tab>
+  
+  <Tab title="GroupManager">
+    ```yaml
+    groups:
+      admin:
+        permissions:
+          - hubbly.*
+    ```
+  </Tab>
+</Tabs>
+
+## Permission Hierarchy
+
+<Accordion title="Recommended Permission Structure">
+  ```
+  Default Players
+  ├─ hubbly.hubbly (base command)
+  ├─ hubbly.command.spawn (teleport to spawn)
+  └─ hubbly.use.compass, launchpad, playervisibility, socials
+  
+  VIP/Donor Players
+  ├─ All Default permissions
+  ├─ hubbly.command.fly (flight)
+  └─ hubbly.use.* (all movement items)
+  
+  Moderators
+  ├─ All VIP permissions
+  ├─ hubbly.command.clearchat (chat management)
+  ├─ hubbly.bypass.place, break, damage (building access)
+  └─ hubbly.notify.antiwdl (security alerts)
+  
+  Admins
+  └─ hubbly.* (full access)
+  ```
+</Accordion>
+
+## Common Use Cases
+
+### Allow building in hub
+
+```bash
+lp user <player> permission set hubbly.bypass.place true
+lp user <player> permission set hubbly.bypass.break true
+```
+
+### Give movement item access
+
+```bash
+lp user <player> permission set hubbly.use.trident true
+lp user <player> permission set hubbly.use.grapplinghook true
+lp user <player> permission set hubbly.use.aote true
+```
+
+### Create builder role
+
+```bash
+lp creategroup builder
+lp group builder permission set hubbly.bypass.place true
+lp group builder permission set hubbly.bypass.break true
+lp group builder permission set hubbly.bypass.forceinventory true
+lp user <player> parent add builder
+```
+
+<Warning>
+  Be careful when granting bypass permissions, as they override the hub's protection mechanisms. Only give these to trusted staff members.
+</Warning>
+
+<Note>
+  All permissions with `default: true` are automatically granted to all players without requiring permission plugin configuration.
+</Note>

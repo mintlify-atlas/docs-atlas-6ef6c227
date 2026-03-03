@@ -1,0 +1,536 @@
+---
+title: Action System
+description: Comprehensive guide to Hubbly's powerful action system with all 17+ action types
+---
+
+## Overview
+
+The Action System is Hubbly's core feature for triggering behaviors. Actions can be attached to items, menus, pressure plates, and more. They use a simple bracket syntax and can be chained together.
+
+## Action Format
+
+Actions follow this syntax:
+
+```
+[ACTION_TYPE] data
+```
+
+### Examples
+
+```yaml
+[PLAYER] spawn
+[MESSAGE] &aWelcome to the server!
+[SOUND] ENTITY_EXPERIENCE_ORB_PICKUP
+```
+
+### Chaining Actions
+
+Multiple actions can be executed sequentially using commas:
+
+```yaml
+actions:
+  - "[MESSAGE] &aTeleporting...,[SOUND] ENTITY_ENDERMAN_TELEPORT,[PLAYER] spawn"
+```
+
+## How Actions Work
+
+The ActionManager processes actions through a well-defined flow:
+
+```java
+// From ActionManager.java:67-95
+public void executeAction(Player player, String actionData) {
+    // 1. Check if player is in a disabled world
+    DisabledWorlds disabledWorldsManager = plugin.getDisabledWorldsManager();
+    if(disabledWorldsManager.inDisabledWorld(player.getLocation())) return;
+    
+    // 2. Parse action identifier and data
+    String identifier = this.getIdentifier(actionData);  // "PLAYER"
+    String data = this.getData(actionData);              // "spawn"
+    
+    // 3. Fire ActionEvent (can be cancelled by other plugins)
+    Action action = actions.get(identifier);
+    ActionEvent event = new ActionEvent(player, action, data);
+    Bukkit.getPluginManager().callEvent(event);
+    
+    if(event.isCancelled()) return;
+    
+    // 4. Execute the action
+    action.execute(plugin, player, data);
+}
+```
+
+<Info>
+  Actions fire a custom `ActionEvent` before execution, allowing other plugins to intercept or cancel them.
+</Info>
+
+## Complete Action Reference
+
+Hubbly includes 17 built-in action types:
+
+### Player Actions
+
+<Accordion title="PLAYER - Execute command as player">
+```yaml
+# Executes a command as if the player typed it
+[PLAYER] spawn
+[PLAYER] /warp shop
+```
+
+The action automatically adds `/` if not present.
+
+**Implementation:**
+```java
+// From PlayerCommandAction.java:32-33
+public void execute(Hubbly plugin, Player player, String data) {
+    player.chat(data.contains("/") ? data : "/" + data);
+}
+```
+</Accordion>
+
+<Accordion title="CONSOLE - Execute command from console">
+```yaml
+# Executes a command from the console
+[CONSOLE] give %player_name% diamond 1
+[CONSOLE] lp user %player_name% permission set hub.vip
+```
+
+**Placeholders:**
+- `%player_name%` - Replaced with the player's name
+
+**Implementation:**
+```java
+// From ConsoleCommandAction.java:33-35
+data = data.replace("%player_name%", player.getName());
+Bukkit.dispatchCommand(Bukkit.getConsoleSender(), data);
+```
+</Accordion>
+
+<Accordion title="GAMEMODE - Change player gamemode">
+```yaml
+[GAMEMODE] CREATIVE
+[GAMEMODE] SURVIVAL
+[GAMEMODE] ADVENTURE
+[GAMEMODE] SPECTATOR
+```
+
+**Valid Values:** CREATIVE, SURVIVAL, ADVENTURE, SPECTATOR
+</Accordion>
+
+<Accordion title="CLEAR - Clear player inventory">
+```yaml
+# Clears the player's entire inventory
+[CLEAR]
+```
+
+No data parameter needed.
+</Accordion>
+
+### Communication Actions
+
+<Accordion title="MESSAGE - Send chat message">
+```yaml
+[MESSAGE] &aWelcome to the server!
+[MESSAGE] &6You received &e10 coins&6!
+```
+
+Supports color codes and hex colors. Messages are processed through Hubbly's MessageBuilder.
+
+**Implementation:**
+```java
+// From MessageAction.java:16-20
+new MessageBuilder(plugin)
+    .setPlayer(player)
+    .setMessage(data)
+    .send();
+```
+</Accordion>
+
+<Accordion title="BROADCAST - Broadcast message to all players">
+```yaml
+[BROADCAST] &e&lEVENT &7starting in 5 minutes!
+[BROADCAST] &6Player &e{player} &6opened a legendary crate!
+```
+
+Supports hex color codes via `ChatUtils.translateHexColorCodes()`.
+</Accordion>
+
+<Accordion title="TITLE - Display title and subtitle">
+```yaml
+# Format: [TITLE] title;subtitle;fadeIn;stay;fadeOut
+[TITLE] &6&lWELCOME;&7To our server;20;100;20
+[TITLE] &c&lATTENTION;Please read the rules;10;60;10
+```
+
+**Parameters:**
+1. Title text (supports colors/placeholders)
+2. Subtitle text (can be empty)
+3. Fade in time (ticks)
+4. Stay time (ticks)
+5. Fade out time (ticks)
+
+**Implementation:**
+```java
+// From TitleAction.java:47-55
+String[] args = data.split(";");
+title = ChatUtils.processMessage(player, args[0]);
+subtitle = args[1].isEmpty() ? "" : ChatUtils.processMessage(player, args[1]);
+fadeIn = Integer.parseInt(args[2]);
+stay = Integer.parseInt(args[3]);
+fadeOut = Integer.parseInt(args[4]);
+player.sendTitle(title, subtitle, fadeIn, stay, fadeOut);
+```
+</Accordion>
+
+<Accordion title="LINK - Send clickable link message">
+```yaml
+# Format: [LINK] message;hover text;url
+[LINK] Click here to join Discord!;Join our community;https://discord.gg/example
+[LINK] &eVisit our website;&7Click to open;https://example.com
+```
+
+**Parameters (separated by `;`):**
+1. Display message
+2. Hover text
+3. URL to open
+
+Creates a clickable text component using Spigot's chat API.
+</Accordion>
+
+### Menu & Navigation Actions
+
+<Accordion title="MENU - Open custom GUI menu">
+```yaml
+[MENU] selector
+[MENU] menus/shop.yml
+```
+
+Opens a menu from the `menus/` folder. If the path doesn't start with `menus/`, it's automatically prepended.
+
+**Permission Check:**
+```java
+// From MenuAction.java:29-38
+String perm = config.getString("permission");
+if(perm != null && !player.hasPermission(perm)) {
+    new MessageBuilder()
+        .setPlugin(plugin)
+        .setPlayer(player)
+        .setKey("no_permission_use")
+        .send();
+    return;
+}
+```
+</Accordion>
+
+<Accordion title="CLOSE - Close current inventory">
+```yaml
+[CLOSE]
+```
+
+Closes the player's currently open inventory. Useful for menu close buttons.
+</Accordion>
+
+<Accordion title="BUNGEE - Transfer to another server">
+```yaml
+[BUNGEE] lobby
+[BUNGEE] survival
+[BUNGEE] server minigames
+```
+
+Requires BungeeCord plugin messaging channel to be enabled.
+
+**Implementation:**
+```java
+// From BungeeAction.java:37-43
+if(data.contains("server ")) {
+    data = data.replace("server ", "");
+}
+final ByteArrayDataOutput out = ByteStreams.newDataOutput();
+out.writeUTF("Connect");
+out.writeUTF(data);
+player.sendPluginMessage(plugin, "BungeeCord", out.toByteArray());
+```
+</Accordion>
+
+### Visual & Audio Actions
+
+<Accordion title="SOUND - Play sound effect">
+```yaml
+[SOUND] ENTITY_EXPERIENCE_ORB_PICKUP
+[SOUND] ENTITY_PLAYER_LEVELUP
+[SOUND] UI_BUTTON_CLICK
+```
+
+Accepts any Bukkit Sound enum value. The sound plays at the player's location with volume 1.0 and pitch 1.0.
+</Accordion>
+
+<Accordion title="FIREWORK - Spawn firework effect">
+```yaml
+# Format: [FIREWORK] type;red;green;blue;power;delay
+[FIREWORK] BALL;255;0;0;1;0
+[FIREWORK] BURST;0;255;255;2;20
+```
+
+**Parameters:**
+1. Firework type (BALL, BALL_LARGE, BURST, CREEPER, STAR)
+2. Red color value (0-255)
+3. Green color value (0-255)
+4. Blue color value (0-255)
+5. Power/height (1-3)
+6. Delay in ticks (optional, default: 1)
+
+**Implementation:**
+```java
+// From FireworkAction.java:44-59
+FireworkEffect.Builder builder = FireworkEffect
+    .builder()
+    .with(FireworkEffect.Type.valueOf(args[0]))
+    .withColor(Color.fromRGB(
+        Integer.parseInt(args[1]), 
+        Integer.parseInt(args[2]), 
+        Integer.parseInt(args[3])
+    ))
+    .withTrail();
+
+Firework firework = player.getWorld().spawn(player.getLocation(), Firework.class);
+FireworkMeta meta = firework.getFireworkMeta();
+meta.addEffect(builder.build());
+meta.setPower(Integer.parseInt(args[4]));
+firework.setFireworkMeta(meta);
+```
+</Accordion>
+
+<Accordion title="EFFECT - Apply potion effect">
+```yaml
+# Format: [EFFECT] effect;duration;strength
+[EFFECT] SPEED;200;1
+[EFFECT] REGENERATION;100;2
+```
+
+**Parameters:**
+1. Potion effect type
+2. Duration in ticks
+3. Amplifier/strength level
+
+Uses XPotion for cross-version compatibility.
+</Accordion>
+
+### Item & Inventory Actions
+
+<Accordion title="ITEM - Give custom item">
+```yaml
+# Format: [ITEM] itemName or [ITEM] itemName;slot
+[ITEM] compass
+[ITEM] selector;0
+```
+
+**Parameters:**
+1. Item name (from items.yml)
+2. Inventory slot (optional)
+
+Executes the Hubbly give command internally:
+```java
+// From ItemAction.java:32-38
+String[] args = data.split(";");
+String item = args[0];
+if(args.length > 1 && args[1] != null) {
+    Bukkit.dispatchCommand(Bukkit.getConsoleSender(), 
+        "hubbly give " + player.getName() + " " + item + " 1 " + Integer.parseInt(args[1]));
+} else {
+    Bukkit.dispatchCommand(Bukkit.getConsoleSender(), 
+        "hubbly give " + player.getName() + " " + item);
+}
+```
+</Accordion>
+
+<Accordion title="SLOT - Change held item slot">
+```yaml
+[SLOT] 1
+[SLOT] 5
+```
+
+Switches the player's selected hotbar slot (1-9).
+
+<Note>
+  The slot number is 1-indexed in the config but converted to 0-indexed internally.
+</Note>
+</Accordion>
+
+### Movement Actions
+
+<Accordion title="LAUNCH - Launch player in direction">
+```yaml
+# Format: [LAUNCH] power;powerY
+[LAUNCH] 2;1.5
+[LAUNCH] 3;2.0
+```
+
+**Parameters:**
+1. Horizontal power multiplier
+2. Vertical (Y-axis) power
+
+If no data is provided, uses values from `config.yml`:
+```yaml
+launchpad:
+  power: 2.0
+  power_y: 1.5
+```
+
+**Implementation:**
+```java
+// From LaunchAction.java:56-67
+new BukkitRunnable() {
+    @Override
+    public void run() {
+        Vector direction = player.getLocation().getDirection();
+        direction.setY(powerY);
+        direction.multiply(power);
+        player.setVelocity(direction);
+    }
+}.runTask(plugin);
+```
+</Accordion>
+
+## Creating Custom Actions
+
+Extend the action system by implementing the `Action` interface:
+
+```java
+package me.calrl.hubbly.action;
+
+import me.calrl.hubbly.Hubbly;
+import org.bukkit.entity.Player;
+
+public interface Action {
+    String getIdentifier();
+    void execute(Hubbly plugin, Player player, String data);
+}
+```
+
+### Example: Custom Heal Action
+
+```java
+public class HealAction implements Action {
+    @Override
+    public String getIdentifier() {
+        return "HEAL";
+    }
+    
+    @Override
+    public void execute(Hubbly plugin, Player player, String data) {
+        player.setHealth(20.0);
+        player.setFoodLevel(20);
+        player.sendMessage(ChatColor.GREEN + "You have been healed!");
+    }
+}
+```
+
+### Registering Custom Actions
+
+```java
+// From ActionManager.java:41-43
+public void registerActions(Action... actions) {
+    Arrays.asList(actions).forEach(action -> 
+        this.actions.put(action.getIdentifier(), action));
+}
+```
+
+Register your custom action:
+```java
+actionManager.registerActions(new HealAction());
+```
+
+## Action Registration
+
+All actions are registered during plugin initialization:
+
+```java
+// From ActionManager.java:45-66
+private void load() {
+    registerActions(
+        new PlayerCommandAction(),
+        new ConsoleCommandAction(),
+        new CloseAction(),
+        new SoundAction(),
+        new GamemodeAction(),
+        new TitleAction(),
+        new FireworkAction(),
+        new BroadcastAction(),
+        new ItemAction(),
+        new BungeeAction(),
+        new MessageAction(),
+        new LaunchAction(),
+        new SlotAction(),
+        new ClearAction(),
+        new LinkAction(),
+        new MenuAction(),
+        new EffectAction()
+    );
+}
+```
+
+## Result Handling
+
+The `executeAction` method returns a `Result` enum:
+
+```java
+public enum Result {
+    SUCCESS,
+    DISABLED_WORLD,
+    INVALID_ARGS,
+    NOT_FOUND,
+    CANCELLED
+}
+```
+
+### Using Result Feedback
+
+```java
+// From ActionManager.java:103-142
+Result result = actionManager.executeAction(player, "[PLAYER] spawn", false);
+
+switch(result) {
+    case SUCCESS:
+        // Action executed successfully
+        break;
+    case DISABLED_WORLD:
+        // Player is in a disabled world
+        break;
+    case NOT_FOUND:
+        // Action type not registered
+        break;
+    case CANCELLED:
+        // ActionEvent was cancelled
+        break;
+    case INVALID_ARGS:
+        // Action format is invalid
+        break;
+}
+```
+
+## Best Practices
+
+1. **Always validate input data** in custom actions
+2. **Use try-catch blocks** for parsing operations
+3. **Fire ActionEvent** for interceptability
+4. **Support placeholders** via ChatUtils and PlaceholderAPI
+5. **Use async tasks** for expensive operations
+6. **Check permissions** where appropriate
+7. **Log errors** with DebugMode for troubleshooting
+
+## Performance Considerations
+
+<Info>
+  Actions execute synchronously by default. For long-running operations, use BukkitRunnable with async tasks.
+</Info>
+
+```java
+// Example: Async database query action
+public void execute(Hubbly plugin, Player player, String data) {
+    new BukkitRunnable() {
+        @Override
+        public void run() {
+            // Your async code here
+        }
+    }.runTaskAsynchronously(plugin);
+}
+```

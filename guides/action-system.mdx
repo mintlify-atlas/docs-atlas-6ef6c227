@@ -1,0 +1,515 @@
+---
+title: Action System
+description: Complete guide to Hubbly's powerful action system for items and menus
+---
+
+Hubbly's action system allows you to execute various actions when players interact with items or menu buttons. Actions use a simple bracket syntax and can be chained together.
+
+## Action Syntax
+
+Actions follow this format:
+
+```yaml
+actions:
+  - "[ACTION_TYPE] data"
+```
+
+<Note>
+Actions are executed in the order they are defined. You can combine multiple actions for complex behaviors.
+</Note>
+
+## Available Actions
+
+### MENU - Open Menu
+
+Opens a menu from the `menus/` folder.
+
+```yaml
+actions:
+  - "[MENU] selector"
+  - "[MENU] menus/selector"  # Also works with path
+```
+
+**Parameters:** Menu file name (with or without `menus/` prefix)
+
+### BUNGEE - Server Transfer
+
+Sends player to a BungeeCord server.
+
+```yaml
+actions:
+  - "[BUNGEE] survival"
+  - "[BUNGEE] server lobby"  # "server" prefix is optional
+```
+
+**Parameters:** Server name from BungeeCord config
+
+<Warning>
+BungeeCord messaging channel must be registered for this action to work.
+</Warning>
+
+### PLAYER - Execute Command as Player
+
+Makes the player execute a command.
+
+```yaml
+actions:
+  - "[PLAYER] spawn"
+  - "[PLAYER] /warp hub"  # Slash is optional
+  - "[PLAYER] buy diamond"
+```
+
+**Parameters:** Command (with or without leading `/`)
+
+### CONSOLE - Execute Command as Console
+
+Executes a command from console.
+
+```yaml
+actions:
+  - "[CONSOLE] give %player% diamond 64"
+  - "[CONSOLE] broadcast Server restart in 5 minutes"
+```
+
+**Parameters:** Command
+
+<Tip>
+Use `%player%` or `%player_name%` placeholder for the player's name.
+</Tip>
+
+### MESSAGE - Send Message
+
+Sends a message to the player.
+
+```yaml
+actions:
+  - "[MESSAGE] &aWelcome to the server!"
+  - "[MESSAGE] <#FF5733>Custom hex colors!"
+```
+
+**Parameters:** Message with color codes
+
+### BROADCAST - Broadcast Message
+
+Broadcasts a message to all players.
+
+```yaml
+actions:
+  - "[BROADCAST] &6%player% &7opened the mystery box!"
+```
+
+**Parameters:** Message with color codes
+
+### TITLE - Send Title
+
+Displays a title and subtitle to the player.
+
+```yaml
+actions:
+  - "[TITLE] &a&lWelcome!;&7Enjoy your stay;10;60;10"
+```
+
+**Format:** `[TITLE] title;subtitle;fadeIn;stay;fadeOut`
+
+**Parameters:**
+- `title` - Main title text
+- `subtitle` - Subtitle text (can be empty)
+- `fadeIn` - Fade in time (ticks)
+- `stay` - Display time (ticks)
+- `fadeOut` - Fade out time (ticks)
+
+<Note>
+20 ticks = 1 second
+</Note>
+
+### SOUND - Play Sound
+
+Plays a sound to the player.
+
+```yaml
+actions:
+  - "[SOUND] ENTITY_PLAYER_LEVELUP"
+  - "[SOUND] BLOCK_NOTE_BLOCK_PLING"
+  - "[SOUND] ENTITY_ENDERMAN_TELEPORT"
+```
+
+**Parameters:** Bukkit Sound enum name
+
+### LINK - Send Clickable Link
+
+Sends a clickable link in chat.
+
+```yaml
+actions:
+  - "[LINK] Click me for the discord;Discord link;discord.com/invite"
+```
+
+**Format:** `[LINK] message;hoverText;url`
+
+**Parameters:**
+- `message` - Chat message text
+- `hoverText` - Text shown on hover
+- `url` - URL to open
+
+### CLOSE - Close Inventory
+
+Closes the player's open inventory.
+
+```yaml
+actions:
+  - "[CLOSE]"
+```
+
+**Parameters:** None
+
+### CLEAR - Clear Inventory
+
+Clears the player's inventory.
+
+```yaml
+actions:
+  - "[CLEAR]"
+```
+
+**Parameters:** None
+
+### ITEM - Give Item
+
+Gives a custom item from `items.yml`.
+
+```yaml
+actions:
+  - "[ITEM] compass"
+  - "[ITEM] shop"
+```
+
+**Parameters:** Item identifier from `items.yml`
+
+### SLOT - Give Item to Slot
+
+Places an item in a specific inventory slot.
+
+```yaml
+actions:
+  - "[SLOT] compass;0"  # Places compass in slot 0
+```
+
+**Format:** `[SLOT] itemId;slot`
+
+**Parameters:**
+- `itemId` - Item identifier from `items.yml`
+- `slot` - Inventory slot number (0-based)
+
+### GAMEMODE - Change Gamemode
+
+Changes the player's gamemode.
+
+```yaml
+actions:
+  - "[GAMEMODE] creative"
+  - "[GAMEMODE] survival"
+  - "[GAMEMODE] adventure"
+  - "[GAMEMODE] spectator"
+```
+
+**Parameters:** Gamemode name
+
+### EFFECT - Apply Potion Effect
+
+Applies a potion effect to the player.
+
+```yaml
+actions:
+  - "[EFFECT] speed;200;1"
+  - "[EFFECT] regeneration;100;2"
+```
+
+**Format:** `[EFFECT] effectType;duration;strength`
+
+**Parameters:**
+- `effectType` - Potion effect type
+- `duration` - Duration in ticks
+- `strength` - Amplifier level (0 = level I)
+
+### FIREWORK - Spawn Firework
+
+Spawns a firework at the player's location.
+
+```yaml
+actions:
+  - "[FIREWORK]"
+```
+
+**Parameters:** None (uses default firework)
+
+### LAUNCH - Launch Player
+
+Launches the player into the air.
+
+```yaml
+actions:
+  - "[LAUNCH]"
+```
+
+**Parameters:** None
+
+## Action Examples
+
+### Complete Server Selector
+
+```yaml menus/selector.yml
+items:
+  survival:
+    material: GRASS_BLOCK
+    name: "&aSurvival Server"
+    slot: 11
+    actions:
+      - "[SOUND] ENTITY_PLAYER_LEVELUP"
+      - "[TITLE] &aSurvival;&7Connecting...;10;40;10"
+      - "[BUNGEE] survival"
+  
+  creative:
+    material: COMMAND_BLOCK
+    name: "&eCreative Server"
+    slot: 13
+    actions:
+      - "[SOUND] ENTITY_PLAYER_LEVELUP"
+      - "[TITLE] &eCreative;&7Connecting...;10;40;10"
+      - "[BUNGEE] creative"
+  
+  minigames:
+    material: GOLD_BLOCK
+    name: "&6Minigames"
+    slot: 15
+    actions:
+      - "[SOUND] ENTITY_PLAYER_LEVELUP"
+      - "[TITLE] &6Minigames;&7Connecting...;10;40;10"
+      - "[BUNGEE] minigames"
+```
+
+### Social Links Menu
+
+```yaml menus/socials.yml
+items:
+  discord:
+    material: PLAYER_HEAD
+    url: http://textures.minecraft.net/texture/7873c12bffb5251a0b88d5ae75c7247cb39a75ff1a81cbe4c8a39b311ddeda
+    name: "&3Discord"
+    slot: 3
+    actions:
+      - "[LINK] Click me for the discord;Discord link;discord.gg/example"
+      - "[SOUND] BLOCK_NOTE_BLOCK_PLING"
+  
+  website:
+    material: PAPER
+    name: "&eWebsite"
+    slot: 5
+    actions:
+      - "[LINK] Visit our website!;Click to open;example.com"
+      - "[SOUND] BLOCK_NOTE_BLOCK_PLING"
+```
+
+### Movement Selector
+
+```yaml menus/movement.yml
+items:
+  normal:
+    material: BARRIER
+    name: "&cNormal Movement"
+    slot: 19
+    actions:
+      - "[PLAYER] hubbly movement none"
+      - "[MESSAGE] &7Movement set to &cNormal"
+      - "[SOUND] BLOCK_NOTE_BLOCK_PLING"
+      - "[CLOSE]"
+  
+  double_jump:
+    material: GOLD_BOOTS
+    name: "&6Double Jump"
+    slot: 22
+    actions:
+      - "[PLAYER] hubbly movement doublejump"
+      - "[MESSAGE] &7Movement set to &6Double Jump"
+      - "[EFFECT] jump_boost;999999;2"
+      - "[SOUND] ENTITY_PLAYER_LEVELUP"
+      - "[CLOSE]"
+  
+  fly:
+    material: FEATHER
+    name: "&bFlight"
+    slot: 25
+    actions:
+      - "[PLAYER] hubbly movement fly"
+      - "[MESSAGE] &7Movement set to &bFlight"
+      - "[SOUND] ENTITY_BAT_TAKEOFF"
+      - "[CLOSE]"
+```
+
+### VIP Rewards Item
+
+```yaml items.yml
+items:
+  vip_rewards:
+    name: "&6&lVIP Rewards"
+    material: DIAMOND
+    glow: true
+    lore:
+      - "&7Click to claim rewards!"
+    actions:
+      - "[SOUND] ENTITY_PLAYER_LEVELUP"
+      - "[TITLE] &6&lREWARDS!;&aYou received VIP rewards;10;60;10"
+      - "[CONSOLE] give %player% diamond 10"
+      - "[EFFECT] regeneration;200;1"
+      - "[FIREWORK]"
+      - "[BROADCAST] &6%player% &7claimed VIP rewards!"
+```
+
+### Hub Teleporter
+
+```yaml items.yml
+items:
+  hub_teleport:
+    name: "&a&lHub Teleporter"
+    material: ENDER_PEARL
+    actions:
+      - "[SOUND] ENTITY_ENDERMAN_TELEPORT"
+      - "[PLAYER] spawn"
+      - "[TITLE] &a&lWelcome!;&7You are now at spawn;10;40;10"
+      - "[EFFECT] blindness;20;1"
+```
+
+## Chaining Actions
+
+Actions execute sequentially. Use this for complex behaviors:
+
+```yaml
+actions:
+  - "[MESSAGE] &aPreparing teleport..."
+  - "[SOUND] BLOCK_NOTE_BLOCK_PLING"
+  - "[EFFECT] blindness;40;1"
+  - "[PLAYER] spawn"
+  - "[TITLE] &a&lWelcome!;&7to spawn;10;60;10"
+  - "[FIREWORK]"
+```
+
+## PlaceholderAPI Support
+
+All message-based actions support PlaceholderAPI:
+
+```yaml
+actions:
+  - "[MESSAGE] &aWelcome &b%player_name%&a!"
+  - "[BROADCAST] &6%player_displayname% &7has &a%player_health% &7health!"
+  - "[TITLE] %player_name%;Level: %player_level%;10;40;10"
+```
+
+<Tip>
+PlaceholderAPI must be installed on your server for placeholders to work.
+</Tip>
+
+## Color Codes
+
+All actions support color formatting:
+
+### Traditional Colors
+
+```yaml
+actions:
+  - "[MESSAGE] &a&lGreen Bold &r&7Gray normal"
+```
+
+### Hex Colors
+
+```yaml
+actions:
+  - "[MESSAGE] <#FF5733>Orange text"
+  - "[TITLE] <#3498DB>Blue Title;<#2ECC71>Green Subtitle;10;40;10"
+```
+
+### Combined
+
+```yaml
+actions:
+  - "[MESSAGE] <#FFAA00>&lCustom &r<#00AAFF>colors!"
+```
+
+## Disabled Worlds
+
+Actions respect the disabled worlds configuration. If a player is in a disabled world, actions won't execute.
+
+<Note>
+This can be configured in the main `config.yml` file.
+</Note>
+
+## Action Event API
+
+Developers can listen to action execution:
+
+```java
+@EventHandler
+public void onAction(ActionEvent event) {
+    Player player = event.getPlayer();
+    Action action = event.getAction();
+    String data = event.getData();
+    
+    // Cancel the action
+    event.setCancelled(true);
+}
+```
+
+The action event is fired before execution, allowing you to:
+- Modify action data
+- Cancel specific actions
+- Add custom logging
+- Implement custom permissions
+
+## Best Practices
+
+1. **Sound Feedback** - Always include sound for better UX
+2. **Visual Feedback** - Use titles or messages to confirm actions
+3. **Action Order** - Put feedback actions before slow actions (teleports, server transfers)
+4. **Error Handling** - Test all actions in-game before deployment
+5. **Performance** - Avoid too many actions on frequently-clicked items
+
+## Common Patterns
+
+### Confirm and Execute
+
+```yaml
+actions:
+  - "[SOUND] ENTITY_EXPERIENCE_ORB_PICKUP"
+  - "[MESSAGE] &aExecuting command..."
+  - "[PLAYER] command"
+```
+
+### Reward with Effects
+
+```yaml
+actions:
+  - "[FIREWORK]"
+  - "[SOUND] ENTITY_PLAYER_LEVELUP"
+  - "[TITLE] &6&lREWARD!;&aYou received items;10;60;10"
+  - "[CONSOLE] give %player% diamond 5"
+```
+
+### Close Menu After Action
+
+```yaml
+actions:
+  - "[PLAYER] command"
+  - "[CLOSE]"
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Creating Custom Items" icon="cube" href="/guides/creating-custom-items">
+    Use actions with custom items
+  </Card>
+  <Card title="Creating Menus" icon="table-cells" href="/guides/creating-menus">
+    Build interactive menus with actions
+  </Card>
+  <Card title="PlaceholderAPI" icon="code" href="/guides/placeholderapi">
+    Integrate PlaceholderAPI with actions
+  </Card>
+</CardGroup>

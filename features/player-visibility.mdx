@@ -1,0 +1,204 @@
+---
+title: Player Visibility
+description: Allow players to toggle visibility of other players with a simple item
+---
+
+The Player Visibility feature provides players with a toggleable item that allows them to show or hide other players on the server. This is useful for reducing visual clutter in busy hub servers.
+
+## Overview
+
+Players can right-click a dye item to toggle between seeing all players (Visible) and hiding all players (Hidden). The item automatically updates its appearance and display name based on the current state.
+
+## Configuration
+
+```yaml config.yml
+playervisibility:
+  enabled: true
+  visible:
+    item: 'LIME_DYE'
+    text: '&rPlayers: &aVisible'
+  hidden:
+    item: 'GRAY_DYE'
+    text: '&rPlayers: &cHidden'
+```
+
+### Configuration Options
+
+<AccordionGroup>
+  <Accordion title="enabled" icon="toggle-on">
+    Enable or disable the player visibility feature.
+    
+    **Type:** Boolean  
+    **Default:** `true`
+  </Accordion>
+
+  <Accordion title="visible.item" icon="eye">
+    The material to display when players are visible.
+    
+    **Type:** Material  
+    **Default:** `LIME_DYE`  
+    **Suggestion:** Use a green/positive colored item
+  </Accordion>
+
+  <Accordion title="visible.text" icon="font">
+    The display name shown when players are visible.
+    
+    **Type:** String (supports color codes)  
+    **Default:** `&rPlayers: &aVisible`
+  </Accordion>
+
+  <Accordion title="hidden.item" icon="eye-slash">
+    The material to display when players are hidden.
+    
+    **Type:** Material  
+    **Default:** `GRAY_DYE`  
+    **Suggestion:** Use a gray/neutral colored item
+  </Accordion>
+
+  <Accordion title="hidden.text" icon="font">
+    The display name shown when players are hidden.
+    
+    **Type:** String (supports color codes)  
+    **Default:** `&rPlayers: &cHidden`
+  </Accordion>
+</AccordionGroup>
+
+## How It Works
+
+<Steps>
+  <Step title="Player receives the item">
+    Give the player visibility item through join actions, custom items, or inventory configuration.
+  </Step>
+  
+  <Step title="Right-click to toggle">
+    When the player right-clicks the item, the visibility mode toggles between VISIBLE and HIDDEN.
+  </Step>
+  
+  <Step title="Item updates automatically">
+    The item in the player's hand automatically changes to reflect the new state (swaps between lime dye and gray dye).
+  </Step>
+  
+  <Step title="Other players shown/hidden">
+    Based on the state, other players on the server are shown or hidden from view.
+  </Step>
+</Steps>
+
+## Permissions
+
+**Permission:** `hubbly.use.player_visibility`
+
+Players need this permission to use the player visibility toggler.
+
+<Warning>
+Players without the permission can still receive the item, but clicking it will show a "no permission" message.
+</Warning>
+
+## Database Integration
+
+Player visibility preferences are automatically saved to the database (if enabled) and persist across sessions.
+
+```java PlayerVisibilityListener.java
+private void swapDye(Player player) {
+    // Get current mode from item
+    PlayerVisibilityMode mode = PlayerVisibilityMode.valueOf(key);
+    PlayerVisibilityMode oppositeMode = mode.opposite();
+
+    // Create new dye item with opposite mode
+    ItemStack newDye = new DyeItem(oppositeKey).build(config);
+    
+    // Update player visibility and save to database
+    PlayerVisibilityManager manager = plugin.getManagerFactory().getPlayerVisibilityManager();
+    manager.setHideMode(player, oppositeMode);
+
+    player.getInventory().setItemInMainHand(newDye);
+}
+```
+
+## Implementation Details
+
+The system uses **PersistentDataContainer** to track the visibility state on the item itself:
+
+```java
+// Check if item has player visibility key
+if(!container.has(PluginKeys.PLAYER_VISIBILITY.getKey())) return;
+
+// Get the current visibility mode from the item
+String key = container.get(PluginKeys.PLAYER_VISIBILITY.getKey(), PersistentDataType.STRING);
+PlayerVisibilityMode mode = PlayerVisibilityMode.valueOf(key);
+```
+
+### Visibility Modes
+
+Two visibility modes are available:
+
+- `PlayerVisibilityMode.VISIBLE` - All players are visible
+- `PlayerVisibilityMode.HIDDEN` - All other players are hidden
+
+## Custom Item Example
+
+You can add the player visibility item to your custom items configuration:
+
+```yaml items.yml
+items:
+  visibility_toggle:
+    name: "&aPlayer Visibility"
+    material: LIME_DYE
+    lore:
+      - "&7Click to toggle player visibility"
+    actions:
+      - "[ITEM] visibility"
+```
+
+Then give it to players on join:
+
+```yaml config.yml
+actions_on_join:
+  - '[ITEM] visibility_toggle;8'
+```
+
+## Best Practices
+
+<Steps>
+  <Step title="Choose intuitive colors">
+    Use green/lime for visible and gray/red for hidden to make the state immediately clear to players.
+  </Step>
+  
+  <Step title="Add to hotbar on join">
+    Place the visibility toggler in an easily accessible hotbar slot (like slot 8 or 9) for quick access.
+  </Step>
+  
+  <Step title="Enable database storage">
+    Enable database integration to remember player preferences across sessions.
+  </Step>
+  
+  <Step title="Test with multiple players">
+    Verify that the visibility toggle works correctly with multiple online players before deploying.
+  </Step>
+</Steps>
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Item not working when clicked" icon="circle-exclamation">
+    - Verify the player has the `hubbly.use.player_visibility` permission
+    - Check that `playervisibility.enabled` is set to `true` in config.yml
+    - Ensure the item has the correct PersistentDataContainer key
+  </Accordion>
+
+  <Accordion title="Players still visible when toggled to hidden" icon="eye">
+    - Check the PlayerVisibilityManager implementation
+    - Verify no other plugins are interfering with player visibility
+    - Ensure the world is not in the disabled-worlds list
+  </Accordion>
+
+  <Accordion title="Preference not saving" icon="database">
+    - Confirm database is enabled and connected in config.yml
+    - Check StorageManager logs for any database errors
+    - Verify the player_data table exists with the visibility column
+  </Accordion>
+</AccordionGroup>
+
+## Related Features
+
+- [Database Integration](/features/database) - Learn about persistent data storage
+- [Custom Items](/configuration/items) - Create custom items with actions

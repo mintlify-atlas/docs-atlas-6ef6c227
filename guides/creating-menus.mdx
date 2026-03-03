@@ -1,0 +1,467 @@
+---
+title: Creating Menus
+description: Build interactive menus with custom items, fill items, and actions in Hubbly
+---
+
+Menus in Hubbly are interactive GUIs that players can open through commands or items. They are defined in YAML files in the `menus/` folder and support custom items, actions, and layouts.
+
+## Basic Menu Structure
+
+Menus are stored in `menus/` folder and loaded automatically. Each menu file defines the title, size, and items.
+
+<Steps>
+  <Step title="Create the menu file">
+    Create a new file in `menus/` folder:
+
+    ```yaml menus/selector.yml
+    title: "&cServer Selector"
+    size: 36
+    items:
+      # Items go here
+    ```
+  </Step>
+
+  <Step title="Add items to the menu">
+    Define items with materials, names, slots, and actions:
+
+    ```yaml menus/selector.yml
+    items:
+      survival:
+        material: APPLE
+        name: "<#CCFFDD>Survival Server"
+        slot: 12
+        lore:
+          - "&aJoin the Survival Server!"
+        actions:
+          - "[BUNGEE] survival"
+    ```
+  </Step>
+
+  <Step title="Open the menu">
+    Use the command or action to open:
+
+    ```
+    /hubbly menu <menu_name>
+    ```
+
+    Or from an action:
+    ```yaml
+    actions:
+      - "[MENU] selector"
+    ```
+  </Step>
+</Steps>
+
+## Menu Configuration
+
+### Menu Properties
+
+| Property | Type | Description | Required |
+|----------|------|-------------|----------|
+| `title` | String | Menu title with color codes | Yes |
+| `size` | Integer | Inventory size (9, 18, 27, 36, 45, 54) | Yes |
+| `items` | Map | Item definitions | Yes |
+| `permission` | String | Permission to open menu | No |
+
+### Item Properties
+
+All item properties from custom items are supported, plus:
+
+| Property | Type | Description | Example |
+|----------|------|-------------|----------|
+| `slot` | Integer | Slot position (0-based) | `12` |
+| `slot` | Integer | Use `-1` for fill item | `-1` |
+
+## Complete Menu Examples
+
+### Server Selector Menu
+
+```yaml menus/selector.yml
+title: "&cServer Selector"
+size: 36
+items:
+  survival:
+    material: APPLE
+    name: "<#CCFFDD>Survival Server"
+    amount: 3
+    url: http://textures.minecraft.net/texture/355e2dc46399b7b9275221fcdc87c66e58d0d3044dcf62af0465122c1cd7e0bc
+    model_data: 10001
+    slot: 12
+    lore:
+      - "&aJoin the Survival Server!"
+    actions:
+      - "[BUNGEE] survival"
+  
+  creative:
+    material: PLAYER_HEAD
+    texture: http://textures.minecraft.net/texture/bcf2105bb737638833033dd8244071e75870e2e11c2617e542e8924fb2b90180
+    name: "&cCreative Server"
+    slot: 14
+    lore:
+      - "&aJoin the Creative Server!"
+    actions:
+      - "[BUNGEE] creative"
+  
+  factions:
+    material: LEATHER_CHESTPLATE
+    color: 8ad592
+    name: "&cFactions Server"
+    slot: 22
+    lore:
+      - "&aJoin the Factions Server!"
+    actions:
+      - "[BUNGEE] factions"
+  
+  fill:
+    slot: -1
+    material: BLACK_STAINED_GLASS_PANE
+    name: " "
+    actions:
+      - "[CLOSE]"
+```
+
+### Socials Menu
+
+```yaml menus/socials.yml
+title: "&6Socials"
+size: 9
+items:
+  discord:
+    material: PLAYER_HEAD
+    name: "&3Discord Server"
+    url: http://textures.minecraft.net/texture/7873c12bffb5251a0b88d5ae75c7247cb39a75ff1a81cbe4c8a39b311ddeda
+    slot: 3
+    lore:
+      - "&aJoin the Discord Server!"
+    actions:
+      - "[LINK] Click me for the discord;Discord link;discord.com/invite"
+  
+  tiktok:
+    material: PLAYER_HEAD
+    url: http://textures.minecraft.net/texture/2786dc9d65c3b7983e8bb6af588fac92f33720c723e0d29f8b74151344a648a1
+    name: "&cTiktok"
+    slot: 5
+    lore:
+      - "&aFollow me on TikTok!"
+    actions:
+      - "[LINK] Click me to open TikTok!;TikTok link;tiktok.com"
+  
+  fill:
+    slot: -1
+    material: BLACK_STAINED_GLASS_PANE
+    name: " "
+    actions:
+      - "[CLOSE]"
+```
+
+### Movement Menu
+
+```yaml menus/movement.yml
+title: "&6Movement"
+size: 45
+items:
+  none:
+    material: BARRIER
+    name: "&cNone"
+    slot: 19
+    lore:
+      - "&aSet to walk"
+    actions:
+      - "[PLAYER] hubbly movement none"
+      - "[CLOSE]"
+  
+  djump:
+    material: GOLD_BOOTS
+    name: "&cDouble Jump"
+    slot: 22
+    lore:
+      - "&aSet to doublejump"
+    actions:
+      - "[PLAYER] hubbly movement doublejump"
+      - "[CLOSE]"
+  
+  fly:
+    material: FEATHER
+    name: "&rFlight"
+    slot: 25
+    lore:
+      - "&aSet to fly"
+    actions:
+      - "[PLAYER] hubbly movement fly"
+      - "[CLOSE]"
+  
+  fill:
+    slot: -1
+    material: BLACK_STAINED_GLASS_PANE
+    name: " "
+```
+
+## Advanced Features
+
+### Player Heads in Menus
+
+<Tip>
+Menus support all three types of player heads
+</Tip>
+
+<CodeGroup>
+
+```yaml Player Name
+items:
+  player_head:
+    material: PLAYER_HEAD
+    texture: player
+    slot: 0
+```
+
+```yaml Texture URL
+items:
+  custom_head:
+    material: PLAYER_HEAD
+    url: http://textures.minecraft.net/texture/YOUR_HASH
+    slot: 0
+```
+
+```yaml HeadDatabase ID
+items:
+  hdb_head:
+    material: PLAYER_HEAD
+    hdb: 12345
+    slot: 0
+```
+
+</CodeGroup>
+
+### Fill Items
+
+Use `slot: -1` to fill all empty slots:
+
+```yaml menus/example.yml
+items:
+  fill:
+    slot: -1
+    material: BLACK_STAINED_GLASS_PANE
+    name: " "
+    actions:
+      - "[CLOSE]"
+```
+
+<Note>
+Fill items are applied to all slots that don't have specific items assigned.
+</Note>
+
+### Leather Armor Colors
+
+Customize leather armor colors with hex codes:
+
+```yaml menus/example.yml
+items:
+  colored_item:
+    material: LEATHER_CHESTPLATE
+    color: 8ad592
+    name: "&aCustom Armor"
+    slot: 10
+```
+
+### Item Amount
+
+Set custom stack sizes for visual effect:
+
+```yaml menus/example.yml
+items:
+  stacked:
+    material: APPLE
+    amount: 3
+    name: "&cThree Apples"
+    slot: 15
+```
+
+### Custom Model Data
+
+Use custom model data for resource packs:
+
+```yaml menus/example.yml
+items:
+  custom_model:
+    material: DIAMOND
+    model_data: 10001
+    name: "&bCustom Model"
+    slot: 20
+```
+
+## Opening Menus
+
+### From Commands
+
+```
+/hubbly menu selector
+/hubbly menu socials
+/hubbly menu movement
+```
+
+### From Items
+
+Use the `[MENU]` action:
+
+```yaml items.yml
+items:
+  compass:
+    actions:
+      - "[MENU] selector"
+```
+
+### From Other Menus
+
+Create nested menus:
+
+```yaml menus/main.yml
+items:
+  submenu:
+    name: "&aOpen Submenu"
+    material: CHEST
+    slot: 13
+    actions:
+      - "[MENU] submenu"
+```
+
+## Menu Permissions
+
+Restrict menu access with permissions:
+
+```yaml menus/vip.yml
+title: "&6VIP Menu"
+size: 27
+permission: hubbly.vip
+items:
+  # Items here
+```
+
+Players without the permission will see a "no permission" message.
+
+## Slot Positioning
+
+<Note>
+Slots are **0-based** (0-53 for a 54-slot inventory)
+</Note>
+
+### Inventory Size Reference
+
+| Size | Rows | Slots |
+|------|------|-------|
+| 9 | 1 | 0-8 |
+| 18 | 2 | 0-17 |
+| 27 | 3 | 0-26 |
+| 36 | 4 | 0-35 |
+| 45 | 5 | 0-44 |
+| 54 | 6 | 0-53 |
+
+### Slot Layout (27 slots)
+
+```
+ 0  1  2  3  4  5  6  7  8
+ 9 10 11 12 13 14 15 16 17
+18 19 20 21 22 23 24 25 26
+```
+
+## Common Menu Patterns
+
+### Centered Item Menu
+
+```yaml menus/centered.yml
+title: "&aCentered Menu"
+size: 27
+items:
+  main_item:
+    material: DIAMOND
+    name: "&bMain Item"
+    slot: 13  # Center of 27-slot inventory
+    actions:
+      - "[PLAYER] command"
+  
+  fill:
+    slot: -1
+    material: GRAY_STAINED_GLASS_PANE
+    name: " "
+```
+
+### Border Menu
+
+Create decorative borders:
+
+```yaml menus/border.yml
+title: "&cBorder Menu"
+size: 54
+items:
+  # Top row
+  border_top:
+    slot: 0,1,2,3,4,5,6,7,8
+    material: BLACK_STAINED_GLASS_PANE
+    name: " "
+  
+  # Content items in middle
+  item1:
+    slot: 20
+    material: DIAMOND
+    name: "&bItem"
+```
+
+<Warning>
+Note: The slot list syntax shown above is for illustration. In practice, you need to define each slot separately or use fill items.
+</Warning>
+
+### Paginated Menu
+
+For multiple pages, create separate menu files:
+
+```yaml menus/page1.yml
+items:
+  next_page:
+    material: ARROW
+    name: "&aNext Page"
+    slot: 26
+    actions:
+      - "[MENU] page2"
+```
+
+```yaml menus/page2.yml
+items:
+  previous_page:
+    material: ARROW
+    name: "&cPrevious Page"
+    slot: 18
+    actions:
+      - "[MENU] page1"
+```
+
+## Best Practices
+
+1. **Consistent Sizing** - Use standard inventory sizes (27 or 54 are most common)
+2. **Fill Items** - Always include fill items for better visual appeal
+3. **Clear Actions** - Use `[CLOSE]` on fill items to prevent accidental clicks
+4. **Descriptive Names** - Use clear, descriptive names for menu items
+5. **Test Layouts** - Test slot positions in-game before deployment
+6. **Color Schemes** - Maintain consistent color themes across menus
+
+## Troubleshooting
+
+<Warning>
+Common issues and solutions
+</Warning>
+
+| Issue | Solution |
+|-------|----------|
+| Menu won't open | Check file path: must be in `menus/` folder |
+| Items not showing | Verify slot numbers are within inventory size |
+| Wrong item position | Remember slots are 0-based |
+| Permission errors | Check permission string matches your setup |
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Action System" icon="bolt" href="/guides/action-system">
+    Learn all available actions for menu items
+  </Card>
+  <Card title="Custom Items" icon="cube" href="/guides/creating-custom-items">
+    Create reusable custom items
+  </Card>
+</CardGroup>
