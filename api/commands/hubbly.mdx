@@ -196,6 +196,114 @@ This command is deprecated as of v3.0.0 and is only intended for one-time migrat
 
 ---
 
+### worlds
+
+Manages the disabled worlds list dynamically.
+
+<ParamField path="/hubbly worlds <subcommand>" type="subcommand">
+  Control which worlds have Hubbly features enabled or disabled.
+  
+  **Permission:** `hubbly.command.worlds`
+</ParamField>
+
+**Subcommands:**
+
+- `add <world>` - Add a world to the disabled worlds list
+- `remove <world>` - Remove a world from the disabled worlds list
+- `check <world>` - Check if a world is in the disabled worlds list
+- `list` - List all disabled worlds
+
+**Examples:**
+```
+/hubbly worlds add world_nether
+/hubbly worlds remove lobby
+/hubbly worlds check world
+/hubbly worlds list
+```
+
+<Note>
+Changes made with this command are temporary and will be lost on server restart. Edit `config.yml` for permanent changes.
+</Note>
+
+---
+
+### pv
+
+Manages player visibility (show/hide players).
+
+<ParamField path="/hubbly pv <show|hide>" type="subcommand">
+  Toggle player visibility for the command sender.
+  
+  **Permission:** `hubbly.command.playervisibility`
+</ParamField>
+
+**Subcommands:**
+
+- `show` - Show all players
+- `hide` - Hide all players
+
+**Examples:**
+```
+/hubbly pv show
+/hubbly pv hide
+```
+
+<Note>
+This is a player-only command and cannot be executed from console. Changes are saved to the database if enabled.
+</Note>
+
+---
+
+### movement
+
+Sets the player's movement mode (fly, double jump, or none).
+
+<ParamField path="/hubbly movement <mode>" type="subcommand">
+  Change the player's active movement enhancement mode.
+  
+  **Permission:** `hubbly.command.movement`
+</ParamField>
+
+**Subcommands:**
+
+- `fly` - Enable flight mode
+- `doublejump` - Enable double jump mode
+- `none` - Disable all movement enhancements
+
+**Examples:**
+```
+/hubbly movement fly
+/hubbly movement doublejump
+/hubbly movement none
+```
+
+<Warning>
+Only one movement mode can be active at a time. Setting a new mode will disable the previous one.
+</Warning>
+
+---
+
+### debug
+
+Enables debug mode for troubleshooting.
+
+<ParamField path="/hubbly debug" type="subcommand">
+  Toggle debug mode to see detailed plugin information in console.
+  
+  **Permission:** `hubbly.command.debug`
+</ParamField>
+
+**Example:**
+```
+/hubbly debug
+```
+
+<Note>
+Debug mode can also be enabled in `config.yml` by setting `debug: true`.
+</Note>
+
+---
+
 ## Permissions
 
 | Permission | Description | Default |
@@ -209,6 +317,10 @@ This command is deprecated as of v3.0.0 and is only intended for one-time migrat
 | `hubbly.command.menu` | Use `/hubbly menu` | - |
 | `hubbly.command.nextannouncement` | Use `/hubbly nextannouncement` | op |
 | `hubbly.command.convert` | Use `/hubbly convert` | - |
+| `hubbly.command.worlds` | Use `/hubbly worlds` and subcommands | op |
+| `hubbly.command.playervisibility` | Use `/hubbly pv` subcommands | - |
+| `hubbly.command.movement` | Use `/hubbly movement` subcommands | - |
+| `hubbly.command.debug` | Use `/hubbly debug` | op |
 
 ## Tab Completion
 
